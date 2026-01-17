@@ -1,0 +1,448 @@
+import { MediaItem } from '../types/media';
+
+export const mediaData: MediaItem[] = [
+    {
+        id: '1',
+        type: 'tv',
+        tmdbId: 123456,
+        title: 'THE PITT',
+        year: 2025,
+        rating: 8.7,
+        genres: ['Drama', 'Medical'],
+        overview:
+            'A realistic look at the life of trauma unit doctors in a Pittsburgh hospital. An intense medical drama that explores the personal and professional challenges faced by emergency room staff.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/e50914?text=THE+PITT',
+        backdropUrl: 'https://placehold.co/1920x1080/0a0a0a/ffffff?text=THE+PITT',
+        continueWatching: {
+            progress: 45,
+            season: 1,
+            episode: 3,
+        },
+    },
+    {
+        id: '2',
+        type: 'movie',
+        tmdbId: 567890,
+        title: 'Dune: Part Three',
+        year: 2025,
+        rating: 9.1,
+        genres: ['Sci-Fi', 'Adventure', 'Drama'],
+        overview:
+            'The epic conclusion to the Dune saga. Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/d4a574?text=DUNE+III',
+        backdropUrl: 'https://placehold.co/1920x1080/1a1205/ffffff?text=DUNE',
+        continueWatching: {
+            progress: 78,
+        },
+    },
+    {
+        id: '3',
+        type: 'tv',
+        tmdbId: 654321,
+        title: 'The Last of Us',
+        year: 2023,
+        rating: 8.8,
+        genres: ['Drama', 'Action', 'Thriller'],
+        overview:
+            'Twenty years after a fungal outbreak ravages the planet, survivors Joel and Ellie embark on a brutal journey through a post-apocalyptic America.',
+        posterUrl: 'https://placehold.co/400x600/2d2d2d/8b4513?text=TLOU',
+        backdropUrl: 'https://placehold.co/1920x1080/1a1a1a/ffffff?text=TLOU',
+        continueWatching: {
+            progress: 23,
+            season: 2,
+            episode: 1,
+        },
+    },
+    {
+        id: '4',
+        type: 'movie',
+        tmdbId: 111222,
+        title: 'Oppenheimer',
+        year: 2023,
+        rating: 8.9,
+        genres: ['Biography', 'Drama', 'History'],
+        overview:
+            'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II.',
+        posterUrl: 'https://placehold.co/400x600/000000/ff6b35?text=OPPENHEIMER',
+        backdropUrl:
+            'https://placehold.co/1920x1080/0a0a0a/ffffff?text=OPPENHEIMER',
+    },
+    {
+        id: '5',
+        type: 'tv',
+        tmdbId: 222333,
+        title: 'House of the Dragon',
+        year: 2022,
+        rating: 8.5,
+        genres: ['Fantasy', 'Drama', 'Action'],
+        overview:
+            'An internal succession war within House Targaryen at the height of its power, 200 years before the events of Game of Thrones.',
+        posterUrl: 'https://placehold.co/400x600/1a0000/ff0000?text=HOTD',
+        backdropUrl: 'https://placehold.co/1920x1080/1a0000/ffffff?text=HOTD',
+        continueWatching: {
+            progress: 56,
+            season: 2,
+            episode: 4,
+        },
+    },
+    {
+        id: '6',
+        type: 'movie',
+        tmdbId: 333444,
+        title: 'Inception',
+        year: 2010,
+        rating: 8.8,
+        genres: ['Action', 'Sci-Fi', 'Thriller'],
+        overview:
+            'A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
+        posterUrl: 'https://placehold.co/400x600/0d3d56/ffffff?text=INCEPTION',
+        backdropUrl:
+            'https://placehold.co/1920x1080/0d3d56/ffffff?text=INCEPTION',
+    },
+    {
+        id: '7',
+        type: 'tv',
+        tmdbId: 444555,
+        title: 'Breaking Bad',
+        year: 2008,
+        rating: 9.5,
+        genres: ['Crime', 'Drama', 'Thriller'],
+        overview:
+            'A chemistry teacher diagnosed with terminal cancer partners with a former student to manufacture methamphetamine to secure his family\'s future.',
+        posterUrl: 'https://placehold.co/400x600/0f4c3a/00ff00?text=BB',
+        backdropUrl: 'https://placehold.co/1920x1080/1a1a1a/ffffff?text=BB',
+    },
+    {
+        id: '8',
+        type: 'movie',
+        tmdbId: 555666,
+        title: 'The Dark Knight',
+        year: 2008,
+        rating: 9.0,
+        genres: ['Action', 'Crime', 'Drama'],
+        overview:
+            'When the menace known as the Joker wreaks havoc on Gotham, Batman must accept one of the greatest psychological tests to fight injustice.',
+        posterUrl: 'https://placehold.co/400x600/000000/ffd700?text=TDK',
+        backdropUrl: 'https://placehold.co/1920x1080/0a0a0a/ffffff?text=TDK',
+    },
+    {
+        id: '9',
+        type: 'tv',
+        tmdbId: 666777,
+        title: 'Stranger Things',
+        year: 2016,
+        rating: 8.7,
+        genres: ['Drama', 'Fantasy', 'Horror'],
+        overview:
+            'When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces, and one strange little girl.',
+        posterUrl: 'https://placehold.co/400x600/1a0000/ff0000?text=ST',
+        backdropUrl: 'https://placehold.co/1920x1080/1a0000/ffffff?text=ST',
+    },
+    {
+        id: '10',
+        type: 'movie',
+        tmdbId: 777888,
+        title: 'Interstellar',
+        year: 2014,
+        rating: 8.6,
+        genres: ['Adventure', 'Drama', 'Sci-Fi'],
+        overview:
+            'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
+        posterUrl:
+            'https://placehold.co/400x600/000814/ffd60a?text=INTERSTELLAR',
+        backdropUrl:
+            'https://placehold.co/1920x1080/000814/ffffff?text=INTERSTELLAR',
+    },
+    {
+        id: '11',
+        type: 'tv',
+        tmdbId: 888999,
+        title: 'The Crown',
+        year: 2016,
+        rating: 8.6,
+        genres: ['Biography', 'Drama', 'History'],
+        overview:
+            'Follows the political rivalries and romance of Queen Elizabeth II\'s reign and the events that shaped the second half of the 20th century.',
+        posterUrl: 'https://placehold.co/400x600/0a0a0a/ffd700?text=THE+CROWN',
+        backdropUrl:
+            'https://placehold.co/1920x1080/0a0a0a/ffffff?text=THE+CROWN',
+    },
+    {
+        id: '12',
+        type: 'movie',
+        tmdbId: 999000,
+        title: 'Parasite',
+        year: 2019,
+        rating: 8.5,
+        genres: ['Drama', 'Thriller'],
+        overview:
+            'Greed and class discrimination threaten the newly formed symbiotic relationship between the wealthy Park family and the destitute Kim clan.',
+        posterUrl: 'https://placehold.co/400x600/000000/ffffff?text=PARASITE',
+        backdropUrl:
+            'https://placehold.co/1920x1080/000000/ffffff?text=PARASITE',
+    },
+    {
+        id: '13',
+        type: 'tv',
+        tmdbId: 100111,
+        title: 'Succession',
+        year: 2018,
+        rating: 8.9,
+        genres: ['Drama'],
+        overview:
+            'The Roy family is known for controlling the biggest media and entertainment company in the world. However, their world changes when their father steps down.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/d4af37?text=SUCCESSION',
+        backdropUrl:
+            'https://placehold.co/1920x1080/1a1a1a/ffffff?text=SUCCESSION',
+    },
+    {
+        id: '14',
+        type: 'movie',
+        tmdbId: 111222333,
+        title: 'Blade Runner 2049',
+        year: 2017,
+        rating: 8.0,
+        genres: ['Sci-Fi', 'Thriller'],
+        overview:
+            'A young blade runner\'s discovery of a long-buried secret leads him to track down former blade runner Rick Deckard.',
+        posterUrl: 'https://placehold.co/400x600/ff6b35/000000?text=BR+2049',
+        backdropUrl: 'https://placehold.co/1920x1080/ff6b35/000000?text=BR+2049',
+    },
+    {
+        id: '15',
+        type: 'tv',
+        tmdbId: 222333444,
+        title: 'Westworld',
+        year: 2016,
+        rating: 8.5,
+        genres: ['Drama', 'Mystery', 'Sci-Fi'],
+        overview:
+            'Set at the intersection of the near future and the reimagined past, explore a world in which every human appetite can be indulged.',
+        posterUrl: 'https://placehold.co/400x600/2d2d2d/ffffff?text=WESTWORLD',
+        backdropUrl:
+            'https://placehold.co/1920x1080/2d2d2d/ffffff?text=WESTWORLD',
+    },
+    {
+        id: '16',
+        type: 'movie',
+        tmdbId: 333444555,
+        title: 'Mad Max: Fury Road',
+        year: 2015,
+        rating: 8.1,
+        genres: ['Action', 'Adventure', 'Sci-Fi'],
+        overview:
+            'In a post-apocalyptic wasteland, a woman rebels against a tyrannical ruler in search for her homeland with the help of a group of female prisoners.',
+        posterUrl: 'https://placehold.co/400x600/ff4500/000000?text=MAD+MAX',
+        backdropUrl:
+            'https://placehold.co/1920x1080/ff4500/000000?text=MAD+MAX',
+    },
+    {
+        id: '17',
+        type: 'tv',
+        tmdbId: 444555666,
+        title: 'True Detective',
+        year: 2014,
+        rating: 8.9,
+        genres: ['Crime', 'Drama', 'Mystery'],
+        overview:
+            'Seasonal anthology series in which police investigations unearth the personal and professional secrets of those involved.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/ffff00?text=TRUE+DET',
+        backdropUrl:
+            'https://placehold.co/1920x1080/1a1a1a/ffffff?text=TRUE+DET',
+    },
+    {
+        id: '18',
+        type: 'movie',
+        tmdbId: 555666777,
+        title: 'Arrival',
+        year: 2016,
+        rating: 7.9,
+        genres: ['Drama', 'Sci-Fi'],
+        overview:
+            'A linguist works with the military to communicate with alien lifeforms after twelve mysterious spacecraft appear around the world.',
+        posterUrl: 'https://placehold.co/400x600/2c3e50/ecf0f1?text=ARRIVAL',
+        backdropUrl:
+            'https://placehold.co/1920x1080/2c3e50/ffffff?text=ARRIVAL',
+    },
+    {
+        id: '19',
+        type: 'tv',
+        tmdbId: 666777888,
+        title: 'The Mandalorian',
+        year: 2019,
+        rating: 8.7,
+        genres: ['Action', 'Adventure', 'Sci-Fi'],
+        overview:
+            'The travels of a lone bounty hunter in the outer reaches of the galaxy, far from the authority of the New Republic.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/silver?text=MANDO',
+        backdropUrl: 'https://placehold.co/1920x1080/1a1a1a/ffffff?text=MANDO',
+    },
+    {
+        id: '20',
+        type: 'movie',
+        tmdbId: 777888999,
+        title: 'Joker',
+        year: 2019,
+        rating: 8.4,
+        genres: ['Crime', 'Drama', 'Thriller'],
+        overview:
+            'A mentally troubled comedian is disregarded and mistreated by society. He then embarks on a downward spiral of revolution and crime.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/00ff00?text=JOKER',
+        backdropUrl: 'https://placehold.co/1920x1080/1a1a1a/ffffff?text=JOKER',
+    },
+    {
+        id: '21',
+        type: 'tv',
+        tmdbId: 888999000,
+        title: 'Chernobyl',
+        year: 2019,
+        rating: 9.3,
+        genres: ['Drama', 'History', 'Thriller'],
+        overview:
+            'In April 1986, an explosion at the Chernobyl nuclear power plant becomes one of the world\'s worst man-made catastrophes.',
+        posterUrl: 'https://placehold.co/400x600/0a0a0a/00ff00?text=CHERNOBYL',
+        backdropUrl:
+            'https://placehold.co/1920x1080/0a0a0a/ffffff?text=CHERNOBYL',
+    },
+    {
+        id: '22',
+        type: 'movie',
+        tmdbId: 999000111,
+        title: 'The Matrix',
+        year: 1999,
+        rating: 8.7,
+        genres: ['Action', 'Sci-Fi'],
+        overview:
+            'A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.',
+        posterUrl: 'https://placehold.co/400x600/000000/00ff00?text=MATRIX',
+        backdropUrl: 'https://placehold.co/1920x1080/000000/00ff00?text=MATRIX',
+    },
+    {
+        id: '23',
+        type: 'tv',
+        tmdbId: 100111222,
+        title: 'The Wire',
+        year: 2002,
+        rating: 9.3,
+        genres: ['Crime', 'Drama', 'Thriller'],
+        overview:
+            'Baltimore drug scene seen through the eyes of drug dealers and law enforcement.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/d4af37?text=THE+WIRE',
+        backdropUrl:
+            'https://placehold.co/1920x1080/1a1a1a/ffffff?text=THE+WIRE',
+    },
+    {
+        id: '24',
+        type: 'movie',
+        tmdbId: 111222444,
+        title: 'The Shawshank Redemption',
+        year: 1994,
+        rating: 9.3,
+        genres: ['Drama'],
+        overview:
+            'Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.',
+        posterUrl: 'https://placehold.co/400x600/2d2d2d/ffffff?text=SHAWSHANK',
+        backdropUrl:
+            'https://placehold.co/1920x1080/2d2d2d/ffffff?text=SHAWSHANK',
+    },
+    {
+        id: '25',
+        type: 'tv',
+        tmdbId: 222333555,
+        title: 'The Sopranos',
+        year: 1999,
+        rating: 9.2,
+        genres: ['Crime', 'Drama'],
+        overview:
+            'New Jersey mob boss Tony Soprano deals with personal and professional issues in his home and business life.',
+        posterUrl: 'https://placehold.co/400x600/000000/ffffff?text=SOPRANOS',
+        backdropUrl:
+            'https://placehold.co/1920x1080/000000/ffffff?text=SOPRANOS',
+    },
+    {
+        id: '26',
+        type: 'movie',
+        tmdbId: 333444666,
+        title: 'Pulp Fiction',
+        year: 1994,
+        rating: 8.9,
+        genres: ['Crime', 'Drama'],
+        overview:
+            'The lives of two mob hitmen, a boxer, a gangster and his wife intertwine in four tales of violence and redemption.',
+        posterUrl: 'https://placehold.co/400x600/ff6b35/000000?text=PULP',
+        backdropUrl: 'https://placehold.co/1920x1080/ff6b35/000000?text=PULP',
+    },
+    {
+        id: '27',
+        type: 'tv',
+        tmdbId: 444555777,
+        title: 'Better Call Saul',
+        year: 2015,
+        rating: 8.9,
+        genres: ['Crime', 'Drama'],
+        overview:
+            'The trials and tribulations of criminal lawyer Jimmy McGill in the years leading up to his fateful run-in with Walter White and Jesse Pinkman.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/d4af37?text=BCS',
+        backdropUrl: 'https://placehold.co/1920x1080/1a1a1a/ffffff?text=BCS',
+    },
+    {
+        id: '28',
+        type: 'movie',
+        tmdbId: 555666888,
+        title: 'Forrest Gump',
+        year: 1994,
+        rating: 8.8,
+        genres: ['Drama', 'Romance'],
+        overview:
+            'The presidencies of Kennedy and Johnson, the Vietnam War, and other historical events unfold from the perspective of an Alabama man.',
+        posterUrl: 'https://placehold.co/400x600/4a90e2/ffffff?text=GUMP',
+        backdropUrl: 'https://placehold.co/1920x1080/4a90e2/ffffff?text=GUMP',
+    },
+    {
+        id: '29',
+        type: 'tv',
+        tmdbId: 666777999,
+        title: 'Peaky Blinders',
+        year: 2013,
+        rating: 8.8,
+        genres: ['Crime', 'Drama'],
+        overview:
+            'A gangster family epic set in 1900s England, centering on a gang who sew razor blades in the peaks of their caps.',
+        posterUrl: 'https://placehold.co/400x600/1a1a1a/silver?text=PEAKY',
+        backdropUrl: 'https://placehold.co/1920x1080/1a1a1a/ffffff?text=PEAKY',
+    },
+    {
+        id: '30',
+        type: 'movie',
+        tmdbId: 777888000,
+        title: 'Gladiator',
+        year: 2000,
+        rating: 8.5,
+        genres: ['Action', 'Adventure', 'Drama'],
+        overview:
+            'A former Roman General sets out to exact vengeance against the corrupt emperor who murdered his family and sent him into slavery.',
+        posterUrl: 'https://placehold.co/400x600/8b4513/ffffff?text=GLADIATOR',
+        backdropUrl:
+            'https://placehold.co/1920x1080/8b4513/ffffff?text=GLADIATOR',
+    },
+];
+
+// Get featured content for hero
+export const getFeaturedContent = (): MediaItem => {
+    return mediaData[0]; // THE PITT as featured
+};
+
+// Get items with continue watching progress
+export const getContinueWatching = (): MediaItem[] => {
+    return mediaData.filter((item) => item.continueWatching);
+};
+
+// Get items by type
+export const getByType = (type: 'movie' | 'tv'): MediaItem[] => {
+    return mediaData.filter((item) => item.type === type);
+};
+
+// Get item by ID
+export const getById = (id: string): MediaItem | undefined => {
+    return mediaData.find((item) => item.id === id);
+};

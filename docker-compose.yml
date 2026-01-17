@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: beastmovies-postgres
+    environment:
+      POSTGRES_DB: beastmovies
+      POSTGRES_USER: beastuser
+      POSTGRES_PASSWORD: beastpass123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U beastuser" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    # For local development:
+    build: ./backend
+    # For production (uncomment and replace with your Docker Hub username):
+    # image: YOUR_DOCKER_USERNAME/beast-movies-backend:latest
+    container_name: beastmovies-backend
+    environment:
+      DATABASE_URL: postgresql://beastuser:beastpass123@postgres:5432/beastmovies
+      JWT_SECRET: your-secret-key-here-change-in-production
+      PORT: 3001
+      BCRYPT_ROUNDS: 10
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
