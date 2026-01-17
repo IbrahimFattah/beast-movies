@@ -72,11 +72,11 @@ jobs:
             # Pull latest changes
             # git pull origin main
             
-            docker stop backend || true
-            docker rm backend || true
+            docker stop beastmovies-backend || true
+            docker rm beastmovies-backend  || true
             
-            docker stop frontend || true
-            docker rm frontend || true           
+            docker stop beastmovies-frontend  || true
+            docker rm beastmovies-frontend || true           
             
             echo "Deploying to dev environment ..."
             docker login ghcr.io -u ${{ github.actor }} --password "${{ secrets.USR_TOKEN }}"
