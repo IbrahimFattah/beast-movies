@@ -37,8 +37,20 @@ jobs:
           push: true
           tags: |
             ghcr.io/IbrahimFattah/beast-movies/backend:latest
-            ghcr.io/IbrahimFattah/beast-movies:${{ github.sha }}
+            ghcr.io/IbrahimFattah/beast-movies/backend:${{ github.sha }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/backend:latest
+          cache-to: type=inline
+          
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/IbrahimFattah/beast-movies/frontend:latest
+            ghcr.io/IbrahimFattah/beast-movies/frontend:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/frontend:latest
           cache-to: type=inline
 
       - name: Deploy to Server
@@ -62,11 +74,15 @@ jobs:
             
             docker stop backend || true
             docker rm backend || true
+            
+            docker stop frontend || true
+            docker rm frontend || true           
+            
+            echo "Deploying to dev environment ..."
+            docker login ghcr.io -u ${{ github.actor }} --password "${{ secrets.USR_TOKEN }}"
 
             
             # Pull latest Docker images
             docker pull ghcr.io/IbrahimFattah/beast-movies/backend:latest
-            
-            echo "Deploying to dev environment ..."
-            docker login ghcr.io -u ${{ github.actor }} --password "${{ secrets.USR_TOKEN }}"
+            docker pull ghcr.io/IbrahimFattah/beast-movies/frontend:latest
             /root/load-env.sh
