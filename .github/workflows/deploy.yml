@@ -85,4 +85,5 @@ jobs:
             # Pull latest Docker images
             docker pull ghcr.io/IbrahimFattah/beast-movies/backend:latest
             docker pull ghcr.io/IbrahimFattah/beast-movies/frontend:latest
-            /root/load-env.sh
+            
+            /root/app-deployment/load-env.sh
