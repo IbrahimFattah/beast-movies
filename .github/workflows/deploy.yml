@@ -61,7 +61,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             # Navigate to app directory
-            cd /opt/beast-movies || exit 1
+            cd /root/app-deployment || exit 1
 
             # pruning
             docker container prune -a -f
