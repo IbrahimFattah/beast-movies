@@ -66,12 +66,10 @@ jobs:
           script: |
             # Navigate to app directory
             cd /root/app-deployment || exit 1
-
             # pruning
             docker container prune -a -f
             docker image prune -a -f
             docker system prune -a -f
-
             
             # Pull latest changes
             # git pull origin main
@@ -84,7 +82,6 @@ jobs:
             
             echo "Deploying to dev environment ..."
             docker login ghcr.io -u ${{ github.actor }} --password "${{ secrets.USR_TOKEN }}"
-
             
             # Pull latest Docker images
             docker pull ghcr.io/ibrahimfattah/beast-movies/backend:latest

@@ -31,7 +31,7 @@ services:
 
     container_name: beastmovies-backend
     environment:
-      DATABASE_URL: postgresql://beastuser:beastpass123@postgres:5432/beastmovies
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       JWT_SECRET: your-secret-key-here-change-in-production
       PORT: 8085
       BCRYPT_ROUNDS: 10
@@ -44,7 +44,12 @@ services:
 
   frontend:
     # For local development:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_TMDB_API_KEY: ${VITE_TMDB_API_KEY}
+        VITE_TMDB_BASE_URL: https://api.themoviedb.org/3
+        VITE_TMDB_IMAGE_BASE_URL: https://image.tmdb.org/t/p
 
     # For production - choose one:
     # Docker Hub:
