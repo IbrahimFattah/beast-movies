@@ -47,6 +47,10 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          build-args: |
+            VITE_TMDB_API_KEY=${{ secrets.VITE_TMDB_API_KEY }}
+            VITE_TMDB_BASE_URL=https://api.themoviedb.org/3
+            VITE_TMDB_IMAGE_BASE_URL=https://image.tmdb.org/t/p
           tags: |
             ghcr.io/ibrahimfattah/beast-movies/frontend:latest
             ghcr.io/ibrahimfattah/beast-movies/frontend:${{ github.sha }}
