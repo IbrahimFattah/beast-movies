@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search as SearchIcon, Film, User, LogOut } from 'lucide-react';
+import { Search as SearchIcon, User, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthModal } from './AuthModal';
 
@@ -26,6 +26,13 @@ export function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Clear search query when navigating to home page
+    useEffect(() => {
+        if (isHomePage) {
+            setSearchQuery('');
+        }
+    }, [isHomePage]);
+
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (searchQuery.trim()) {
@@ -38,21 +45,26 @@ export function Navbar() {
         setShowUserMenu(false);
     };
 
+
     return (
         <>
             <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-dark-900/95 backdrop-blur-md' : 'bg-transparent'
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+                    ? 'glass shadow-2xl'
+                    : 'bg-gradient-to-b from-black/80 to-transparent'
                     }`}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16 md:h-20 gap-8">
                         {/* Logo and Brand */}
                         <div className="flex items-center gap-3 flex-shrink-0">
-                            <Link to="/" className="flex items-center gap-2 group">
-                                <div className="w-8 h-8 md:w-10 md:h-10 bg-accent rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-                                    <Film className="w-5 h-5 md:w-6 md:h-6 text-white" />
-                                </div>
-                                <span className="text-xl md:text-2xl font-bold text-white">
+                            <Link to="/" className="flex items-center gap-3 group">
+                                <img
+                                    src="/beast-logo.png"
+                                    alt="Beast Movies Logo"
+                                    className="w-10 h-10 md:w-12 md:h-12 rounded-lg group-hover:scale-105 transition-transform object-contain"
+                                />
+                                <span className="text-xl md:text-2xl font-bold" style={{ color: '#f4a029' }}>
                                     Beast Movies
                                 </span>
                             </Link>

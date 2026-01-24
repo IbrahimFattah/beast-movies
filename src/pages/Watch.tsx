@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { buildVidSrcEmbedUrl } from '../utils/vidsrc';
@@ -10,6 +11,30 @@ export function Watch() {
     }>();
     const navigate = useNavigate();
     const location = useLocation();
+    const [showControls, setShowControls] = useState(true);
+
+    // Handle fullscreen changes
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            // When exiting fullscreen, show controls
+            if (!document.fullscreenElement) {
+                setShowControls(true);
+            }
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange); // IE/Edge
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+        };
+    }, []);
+
 
     // Extract type from pathname (e.g., /watch/movie/123 or /watch/tv/123/1/1)
     const pathSegments = location.pathname.split('/');
@@ -74,32 +99,39 @@ export function Watch() {
     }
 
     return (
-        <div className="min-h-screen bg-black">
-            {/* Header with Back Button */}
-            <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-4 py-4">
+        <div
+            className="fixed inset-0 bg-black"
+            onMouseEnter={() => setShowControls(true)}
+            onMouseMove={() => setShowControls(true)}
+            onMouseLeave={() => setShowControls(false)}
+            onTouchStart={() => setShowControls(!showControls)}
+        >
+            {/* Back Arrow Overlay - Appears on hover/touch */}
+            <div
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showControls
+                    ? 'opacity-100 translate-y-0'
+                    : 'opacity-0 -translate-y-full pointer-events-none'
+                    }`}
+            >
+                <div className="p-6">
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 px-4 py-2 text-white hover:text-accent transition-colors"
+                        className="flex items-center justify-center w-12 h-12 text-white hover:text-white/80 transition-colors"
+                        aria-label="Go back"
                     >
-                        <ArrowLeft className="w-5 h-5" />
-                        <span className="font-medium">Back</span>
+                        <ArrowLeft className="w-8 h-8" strokeWidth={2.5} />
                     </button>
                 </div>
             </div>
 
-            {/* Video Player */}
-            <div className="pt-16 h-screen flex items-center justify-center">
-                <div className="w-full max-w-7xl aspect-video bg-black">
-                    <iframe
-                        src={embedUrl}
-                        className="w-full h-full"
-                        allowFullScreen
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        title="Video Player"
-                    />
-                </div>
-            </div>
+            {/* Fullscreen Video Player */}
+            <iframe
+                src={embedUrl}
+                className="absolute inset-0 w-full h-full border-0"
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                title="Video Player"
+            />
         </div>
     );
 }

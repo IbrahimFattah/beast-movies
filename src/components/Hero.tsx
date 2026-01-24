@@ -27,32 +27,32 @@ export function Hero({ media }: HeroProps) {
 
     return (
         <div className="relative w-full h-screen min-h-[600px] overflow-hidden">
-            {/* Background Image */}
-            <div className="absolute inset-0">
+            {/* Background Image with Ken Burns Effect */}
+            <div className="absolute inset-0 overflow-hidden">
                 <img
                     src={media.backdropUrl}
                     alt={media.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover animate-kenBurns"
                 />
             </div>
 
-            {/* Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+            {/* Enhanced Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
 
-            {/* Vignette */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,black_100%)] opacity-60" />
+            {/* Enhanced Vignette */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
 
-            {/* Content */}
+            {/* Content with Staggered Animations */}
             <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
                 <div className="max-w-2xl pt-20 md:pt-0">
-                    {/* Title */}
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white mb-4 uppercase tracking-tight">
+                    {/* Title with fade-in animation */}
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white mb-6 tracking-tight animate-slideUp opacity-0">
                         {media.title}
                     </h1>
 
-                    {/* Metadata Pills */}
-                    <div className="mb-6">
+                    {/* Metadata Pills with delay */}
+                    <div className="mb-6 animate-slideUp opacity-0 delay-100">
                         <BadgePills
                             rating={media.rating}
                             year={media.year}
@@ -60,36 +60,36 @@ export function Hero({ media }: HeroProps) {
                         />
                     </div>
 
-                    {/* Description */}
-                    <p className="text-base md:text-lg text-gray-200 mb-8 line-clamp-2 max-w-xl">
+                    {/* Description with delay */}
+                    <p className="text-lg md:text-xl text-gray-200 mb-8 line-clamp-3 max-w-xl leading-relaxed animate-slideUp opacity-0 delay-200">
                         {media.overview}
                     </p>
 
-                    {/* Buttons */}
-                    <div className="flex flex-wrap items-center gap-4">
-                        {/* Play Button */}
+                    {/* Buttons with delay */}
+                    <div className="flex flex-wrap items-center gap-4 animate-slideUp opacity-0 delay-300">
+                        {/* Play Button with enhanced styling */}
                         <button
                             onClick={handlePlay}
-                            className="flex items-center gap-2 px-6 md:px-8 py-3 md:py-4 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-all duration-200 hover:scale-105 shadow-lg"
+                            className="group flex items-center gap-3 px-8 md:px-10 py-4 md:py-5 bg-accent text-black font-bold text-lg rounded-lg hover:bg-accent-light transition-all duration-300 hover:scale-105 hover:glow-orange shadow-2xl"
                         >
-                            <Play className="w-5 h-5 md:w-6 md:h-6 fill-black" />
-                            <span className="text-base md:text-lg">Play</span>
+                            <Play className="w-6 h-6 md:w-7 md:h-7 fill-black transition-transform group-hover:scale-110" />
+                            <span>Play Now</span>
                         </button>
 
-                        {/* See More Button */}
+                        {/* See More Button with glassmorphism */}
                         <button
                             onClick={handleSeeMore}
-                            className="flex items-center gap-2 px-6 md:px-8 py-3 md:py-4 bg-white/10 text-white font-semibold rounded-lg border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-200 backdrop-blur-sm"
+                            className="group flex items-center gap-3 px-8 md:px-10 py-4 md:py-5 glass text-white font-bold text-lg rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105"
                         >
-                            <Info className="w-5 h-5 md:w-6 md:h-6" />
-                            <span className="text-base md:text-lg">See More</span>
+                            <Info className="w-6 h-6 md:w-7 md:h-7 transition-transform group-hover:scale-110" />
+                            <span>More Info</span>
                         </button>
                     </div>
                 </div>
             </div>
 
             {/* Bottom Fade */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black to-transparent" />
         </div>
     );
 }
