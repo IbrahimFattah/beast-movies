@@ -1,11 +1,17 @@
 FROM node:18-alpine
 
+# Add build dependencies for native modules (bcrypt)
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
-
+# Copy all files first
 COPY . .
+
+# Install dependencies fresh in the container (fixes bcrypt architecture issues)
+RUN rm -rf node_modules package-lock.json && npm install
+
+# Build TypeScript
 RUN npm run build
 
 EXPOSE 8085

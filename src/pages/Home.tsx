@@ -4,18 +4,66 @@ import { SectionTitle } from '../components/SectionTitle';
 import { RowCarousel } from '../components/RowCarousel';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { getTrending, getPopularMovies, getPopularTVShows, getTopRatedMovies } from '../services/tmdb';
-import { getContinueWatching, mergeContinueWatching } from '../services/storage';
-import { MediaItem } from '../types/media';
+import { getTrending, getPopularMovies, getPopularTVShows, getTopRatedMovies, getMediaDetails } from '../services/tmdb';
+import { getContinueWatching } from '../services/storage';
+import { continueWatchingApi } from '../services/continueWatching';
+import { favoritesApi } from '../services/favorites';
+import { watchlistApi } from '../services/watchlist';
+import { useAuth } from '../contexts/AuthContext';
+import { MediaItem, ContinueWatchingItem } from '../types/media';
 
 export function Home() {
+    const { isAuthenticated } = useAuth();
     const [trending, setTrending] = useState<MediaItem[]>([]);
     const [movies, setMovies] = useState<MediaItem[]>([]);
     const [tvShows, setTVShows] = useState<MediaItem[]>([]);
     const [topRated, setTopRated] = useState<MediaItem[]>([]);
     const [continueWatchingItems, setContinueWatchingItems] = useState<MediaItem[]>([]);
+    const [favoritesItems, setFavoritesItems] = useState<MediaItem[]>([]);
+    const [watchlistItems, setWatchlistItems] = useState<MediaItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const fetchContinueWatching = async (
+        allItems: MediaItem[],
+        continueWatchingData: ContinueWatchingItem[]
+    ): Promise<MediaItem[]> => {
+        // Find matching items from fetched content
+        const watchingItems: MediaItem[] = [];
+
+        for (const cwItem of continueWatchingData) {
+            // First try to find in our already-fetched items
+            const existingItem = allItems.find(item => item.tmdbId === cwItem.tmdbId);
+
+            if (existingItem) {
+                watchingItems.push({
+                    ...existingItem,
+                    continueWatching: {
+                        progress: cwItem.progress,
+                        season: cwItem.season,
+                        episode: cwItem.episode,
+                    },
+                });
+            } else {
+                // Fetch details for items not in our current list
+                try {
+                    const details = await getMediaDetails(cwItem.type, cwItem.tmdbId);
+                    watchingItems.push({
+                        ...details,
+                        continueWatching: {
+                            progress: cwItem.progress,
+                            season: cwItem.season,
+                            episode: cwItem.episode,
+                        },
+                    });
+                } catch (err) {
+                    console.error(`Failed to fetch details for ${cwItem.type} ${cwItem.tmdbId}:`, err);
+                }
+            }
+        }
+
+        return watchingItems;
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -35,15 +83,78 @@ export function Home() {
             setTVShows(tvShowsData);
             setTopRated(topRatedData);
 
-            // Load continue watching from localStorage
-            const continueWatchingData = getContinueWatching();
+            // Get continue watching data - from server if logged in, otherwise from localStorage
+            let continueWatchingData: ContinueWatchingItem[] = [];
+
+            if (isAuthenticated) {
+                try {
+                    continueWatchingData = await continueWatchingApi.getAll();
+                } catch (err) {
+                    console.error('Failed to fetch continue watching from server:', err);
+                    // Fall back to localStorage
+                    continueWatchingData = getContinueWatching();
+                }
+            } else {
+                continueWatchingData = getContinueWatching();
+            }
+
             if (continueWatchingData.length > 0) {
-                // Fetch details for continue watching items
-                // For now, we'll merge with existing data
                 const allItems = [...trendingData, ...moviesData, ...tvShowsData];
-                const merged = mergeContinueWatching(allItems);
-                const watching = merged.filter(item => item.continueWatching);
+                const watching = await fetchContinueWatching(allItems, continueWatchingData);
                 setContinueWatchingItems(watching);
+            } else {
+                setContinueWatchingItems([]);
+            }
+
+            // Fetch favorites and watchlist for logged in users
+            if (isAuthenticated) {
+                try {
+                    const [favorites, watchlist] = await Promise.all([
+                        favoritesApi.getAll(),
+                        watchlistApi.getAll()
+                    ]);
+
+                    // Fetch details for favorites
+                    if (favorites.length > 0) {
+                        const favoriteItems = await Promise.all(
+                            favorites.map(async (fav) => {
+                                try {
+                                    return await getMediaDetails(fav.media_type, fav.tmdb_id);
+                                } catch (err) {
+                                    console.error(`Failed to fetch favorite ${fav.tmdb_id}:`, err);
+                                    return null;
+                                }
+                            })
+                        );
+                        setFavoritesItems(favoriteItems.filter((item): item is MediaItem => item !== null));
+                    } else {
+                        setFavoritesItems([]);
+                    }
+
+                    // Fetch details for watchlist
+                    if (watchlist.length > 0) {
+                        const watchlistMediaItems = await Promise.all(
+                            watchlist.map(async (wl) => {
+                                try {
+                                    return await getMediaDetails(wl.media_type, wl.tmdb_id);
+                                } catch (err) {
+                                    console.error(`Failed to fetch watchlist ${wl.tmdb_id}:`, err);
+                                    return null;
+                                }
+                            })
+                        );
+                        setWatchlistItems(watchlistMediaItems.filter((item): item is MediaItem => item !== null));
+                    } else {
+                        setWatchlistItems([]);
+                    }
+                } catch (err) {
+                    console.error('Error fetching favorites/watchlist:', err);
+                    setFavoritesItems([]);
+                    setWatchlistItems([]);
+                }
+            } else {
+                setFavoritesItems([]);
+                setWatchlistItems([]);
             }
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -55,7 +166,7 @@ export function Home() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [isAuthenticated]);
 
     if (loading) {
         return (
@@ -88,6 +199,22 @@ export function Home() {
                         <section className="mb-12">
                             <SectionTitle title="Continue Watching" />
                             <RowCarousel items={continueWatchingItems} />
+                        </section>
+                    )}
+
+                    {/* My Favorites */}
+                    {favoritesItems.length > 0 && (
+                        <section className="mb-12">
+                            <SectionTitle title="My Favorites" />
+                            <RowCarousel items={favoritesItems} />
+                        </section>
+                    )}
+
+                    {/* My Watchlist */}
+                    {watchlistItems.length > 0 && (
+                        <section className="mb-12">
+                            <SectionTitle title="My Watchlist" />
+                            <RowCarousel items={watchlistItems} />
                         </section>
                     )}
 

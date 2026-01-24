@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import favoritesRoutes from './routes/favorites';
+import continueWatchingRoutes from './routes/continueWatching';
+import watchlistRoutes from './routes/watchlist';
 
 dotenv.config();
 
@@ -21,9 +23,11 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/continue-watching', continueWatchingRoutes);
+app.use('/api/watchlist', watchlistRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (req: express.Request, res: express.Response) => {
     res.json({ status: 'ok' });
 });
 

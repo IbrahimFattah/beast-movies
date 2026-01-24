@@ -7,12 +7,28 @@ interface PosterCardProps {
 }
 
 export function PosterCard({ media }: PosterCardProps) {
-    const detailsUrl = `/details/${media.type}/${media.tmdbId}`;
+    // If item has continue watching data, link directly to watch page to resume
+    // Otherwise, link to details page
+    let linkUrl: string;
+
+    if (media.continueWatching) {
+        if (media.type === 'tv' && media.continueWatching.season && media.continueWatching.episode) {
+            // Resume TV show at saved episode
+            linkUrl = `/watch/tv/${media.tmdbId}/${media.continueWatching.season}/${media.continueWatching.episode}`;
+        } else {
+            // Resume movie
+            linkUrl = `/watch/movie/${media.tmdbId}`;
+        }
+    } else {
+        // No continue watching data, go to details
+        linkUrl = `/details/${media.type}/${media.tmdbId}`;
+    }
+
     const mediaTypeLabel = media.type === 'movie' ? 'Movie' : 'TV Show';
 
     return (
         <Link
-            to={detailsUrl}
+            to={linkUrl}
             className="group relative flex-shrink-0 w-40 md:w-48 transition-all duration-500 hover:scale-110 hover:z-50"
         >
             {/* Poster Image Container */}

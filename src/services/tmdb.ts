@@ -6,6 +6,7 @@ import {
     TMDBResponse,
     MediaItem,
     TMDBSeasonDetails,
+    TMDBEpisode,
 } from '../types/media';
 
 // Environment variables
@@ -202,4 +203,71 @@ export async function getTVSeasonDetails(
     seasonNumber: number
 ): Promise<TMDBSeasonDetails> {
     return await fetchFromTMDB<TMDBSeasonDetails>(`/tv/${tmdbId}/season/${seasonNumber}`);
+}
+
+/**
+ * Get next episode information for auto-play
+ * Returns null if there is no next episode (end of series)
+ */
+export async function getNextEpisode(
+    tmdbId: number,
+    currentSeason: number,
+    currentEpisode: number
+): Promise<{ season: number; episode: number; data: TMDBEpisode; runtime?: number } | null> {
+    try {
+        // First, fetch the current season details
+        const currentSeasonData = await getTVSeasonDetails(tmdbId, currentSeason);
+
+        // Check if there's a next episode in the current season
+        const nextEpisodeInSeason = currentSeasonData.episodes.find(
+            ep => ep.episode_number === currentEpisode + 1
+        );
+
+        if (nextEpisodeInSeason) {
+            // Next episode exists in current season
+            return {
+                season: currentSeason,
+                episode: nextEpisodeInSeason.episode_number,
+                data: nextEpisodeInSeason,
+            };
+        }
+
+        // No next episode in current season, try next season
+        try {
+            const nextSeasonData = await getTVSeasonDetails(tmdbId, currentSeason + 1);
+
+            // Get the first episode of the next season
+            if (nextSeasonData.episodes.length > 0) {
+                const firstEpisode = nextSeasonData.episodes[0];
+                return {
+                    season: currentSeason + 1,
+                    episode: firstEpisode.episode_number,
+                    data: firstEpisode,
+                };
+            }
+        } catch (err) {
+            // Next season doesn't exist - this is the last episode of the series
+            return null;
+        }
+
+        // No next episode found
+        return null;
+    } catch (err) {
+        console.error('Error fetching next episode:', err);
+        return null;
+    }
+}
+
+/**
+ * Get episode runtime estimation from TV show details
+ */
+export async function getEpisodeRuntime(tmdbId: number): Promise<number> {
+    try {
+        const tvDetails = await fetchFromTMDB<TMDBTVShowDetails>(`/tv/${tmdbId}`);
+        // Return average runtime (in minutes), default to 45 if not available
+        return tvDetails.episode_run_time?.[0] || 45;
+    } catch (err) {
+        console.error('Error fetching episode runtime:', err);
+        return 45; // Default to 45 minutes
+    }
 }

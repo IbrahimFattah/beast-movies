@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     container_name: beastmovies-postgres
     environment:
       POSTGRES_DB: beastmovies
@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: beastpass123
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/migrations:/docker-entrypoint-initdb.d
+      - ./backend/migrations/:/docker-entrypoint-initdb.d
     ports:
       - "5434:5432"
     healthcheck:
@@ -34,8 +34,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       JWT_SECRET: your-secret-key-here-change-in-production
       PORT: 8085
-      BCRYPT_ROUNDS: 10
-      NODE_ENV: production
+      #BCRYPT_ROUNDS: 10
+      #NODE_ENV: production
     ports:
       - "8085:8085"
     depends_on:

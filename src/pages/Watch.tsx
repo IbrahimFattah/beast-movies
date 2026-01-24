@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { buildVidSrcEmbedUrl } from '../utils/vidsrc';
+import { useAuth } from '../contexts/AuthContext';
+import { saveContinueWatching } from '../services/storage';
+import { continueWatchingApi } from '../services/continueWatching';
+import { getNextEpisode, getEpisodeRuntime, buildImageUrl, IMAGE_SIZES } from '../services/tmdb';
+import { NextEpisodeOverlay } from '../components/NextEpisodeOverlay';
+import { NextEpisodeButton } from '../components/NextEpisodeButton';
 
 export function Watch() {
     const { tmdbId, season, episode } = useParams<{
@@ -11,7 +17,87 @@ export function Watch() {
     }>();
     const navigate = useNavigate();
     const location = useLocation();
+    const { isAuthenticated } = useAuth();
     const [showControls, setShowControls] = useState(true);
+
+    // Auto-play next episode state
+    const [showNextEpisodeOverlay, setShowNextEpisodeOverlay] = useState(false);
+    const [nextEpisodeData, setNextEpisodeData] = useState<{
+        season: number;
+        episode: number;
+        title: string;
+        thumbnail: string;
+    } | null>(null);
+    const [autoPlayCancelled, setAutoPlayCancelled] = useState(false);
+
+    // Extract type from pathname early (needed for save progress)
+    const pathSegments = location.pathname.split('/');
+    const mediaType = pathSegments[2] as 'movie' | 'tv';
+
+    // Save progress when starting to watch
+    useEffect(() => {
+        if (!tmdbId || !mediaType || (mediaType !== 'movie' && mediaType !== 'tv')) {
+            return;
+        }
+
+        const saveProgress = async () => {
+            const numericTmdbId = parseInt(tmdbId);
+            const seasonNum = season ? parseInt(season) : undefined;
+            const episodeNum = episode ? parseInt(episode) : undefined;
+
+            // Save with 0 progress initially (marks as "started watching")
+            if (isAuthenticated) {
+                try {
+                    await continueWatchingApi.upsert(
+                        numericTmdbId,
+                        mediaType,
+                        0,
+                        seasonNum,
+                        episodeNum
+                    );
+                } catch (err) {
+                    console.error('Failed to save continue watching to server:', err);
+                    // Fall back to localStorage
+                    saveContinueWatching(numericTmdbId, mediaType, 0, seasonNum, episodeNum);
+                }
+            } else {
+                saveContinueWatching(numericTmdbId, mediaType, 0, seasonNum, episodeNum);
+            }
+        };
+
+        saveProgress();
+    }, [tmdbId, mediaType, season, episode, isAuthenticated]);
+
+    // Handle mouse movement to show/hide controls and next episode button
+    useEffect(() => {
+        let timeout: number;
+
+        const handleMouseMove = () => {
+            setShowControls(true);
+            clearTimeout(timeout);
+            timeout = window.setTimeout(() => {
+                setShowControls(false);
+            }, 3000); // Hide after 3 seconds of inactivity
+        };
+
+        const handleMouseLeave = () => {
+            setShowControls(false);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseleave', handleMouseLeave);
+
+        // Initial timeout
+        timeout = window.setTimeout(() => {
+            setShowControls(false);
+        }, 3000);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseleave', handleMouseLeave);
+            clearTimeout(timeout);
+        };
+    }, []);
 
     // Handle fullscreen changes
     useEffect(() => {
@@ -36,11 +122,104 @@ export function Watch() {
     }, []);
 
 
-    // Extract type from pathname (e.g., /watch/movie/123 or /watch/tv/123/1/1)
-    const pathSegments = location.pathname.split('/');
-    const type = pathSegments[2]; // /watch/[movie|tv]/...
+    // Fetch next episode data and trigger auto-play overlay for TV shows
+    useEffect(() => {
+        if (mediaType !== 'tv' || !tmdbId || !season || !episode) {
+            return;
+        }
 
-    if (!type || !tmdbId || (type !== 'movie' && type !== 'tv')) {
+        const numericTmdbId = parseInt(tmdbId);
+        const seasonNum = parseInt(season);
+        const episodeNum = parseInt(episode);
+
+        let overlayTimeout: number | null = null;
+
+        const setupAutoPlay = async () => {
+            try {
+                // Fetch next episode information
+                const nextEp = await getNextEpisode(numericTmdbId, seasonNum, episodeNum);
+
+                if (!nextEp) {
+                    // No next episode (end of series)
+                    return;
+                }
+
+                // Store next episode data for the overlay
+                setNextEpisodeData({
+                    season: nextEp.season,
+                    episode: nextEp.episode,
+                    title: nextEp.data.name,
+                    thumbnail: buildImageUrl(nextEp.data.still_path, IMAGE_SIZES.backdropSmall),
+                });
+
+                // Get episode runtime to calculate when to show overlay
+                const runtime = await getEpisodeRuntime(numericTmdbId);
+                console.log('DEBUG: Fetched runtime:', runtime, 'minutes');
+
+                // Show overlay at 85% of runtime (convert minutes to milliseconds)
+                const triggerTime = runtime * 60 * 1000 * 0.85;
+                console.log('DEBUG: Trigger time set for:', triggerTime, 'ms');
+                console.log('DEBUG: Will show overlay in approx:', triggerTime / 1000, 'seconds');
+
+                // For testing: Show overlay after 10 seconds
+                // const triggerTime = 10000;
+
+                // Set timeout to show overlay
+                overlayTimeout = setTimeout(() => {
+                    if (!autoPlayCancelled) {
+                        setShowNextEpisodeOverlay(true);
+                    }
+                }, triggerTime);
+            } catch (err) {
+                console.error('Error setting up auto-play:', err);
+            }
+        };
+
+        setupAutoPlay();
+
+        // Cleanup timeout on unmount or when dependencies change
+        return () => {
+            if (overlayTimeout) {
+                clearTimeout(overlayTimeout);
+            }
+        };
+    }, [tmdbId, season, episode, mediaType, autoPlayCancelled]);
+
+    // Reset auto-play state when episode changes
+    useEffect(() => {
+        setShowNextEpisodeOverlay(false);
+        setAutoPlayCancelled(false);
+        setNextEpisodeData(null);
+    }, [tmdbId, season, episode]);
+
+    // Handle hiding the overlay
+    const handleHideOverlay = () => {
+        setShowNextEpisodeOverlay(false);
+        setAutoPlayCancelled(true);
+    };
+
+    // Handle countdown complete - navigate to next episode
+    const handleCountdownComplete = () => {
+        if (nextEpisodeData && !autoPlayCancelled) {
+            // Hide overlay first
+            setShowNextEpisodeOverlay(false);
+
+            // Clear history stack: Replace current state with fresh history
+            // This ensures back button always goes to Details page
+            const detailsUrl = `/details/tv/${tmdbId}`;
+            const nextEpisodeUrl = `/watch/tv/${tmdbId}/${nextEpisodeData.season}/${nextEpisodeData.episode}`;
+
+            // Reset history: Details → Next Episode (only 2 items in stack)
+            window.history.replaceState(null, '', detailsUrl);
+            window.history.pushState(null, '', nextEpisodeUrl);
+
+            // Force a re-render by navigating with replace
+            navigate(nextEpisodeUrl, { replace: true });
+        }
+    };
+
+
+    if (!mediaType || !tmdbId || (mediaType !== 'movie' && mediaType !== 'tv')) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <div className="text-center">
@@ -59,12 +238,12 @@ export function Watch() {
     // Build embed URL
     let embedUrl: string;
     try {
-        if (type === 'movie') {
+        if (mediaType === 'movie') {
             embedUrl = buildVidSrcEmbedUrl({
                 type: 'movie',
                 tmdbId: parseInt(tmdbId),
             });
-        } else if (type === 'tv') {
+        } else if (mediaType === 'tv') {
             if (!season || !episode) {
                 throw new Error('Season and episode required for TV shows');
             }
@@ -115,7 +294,15 @@ export function Watch() {
             >
                 <div className="p-6">
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => {
+                            // Navigate to show details page for TV shows, or home for movies
+                            // Use replace to avoid cluttering browser history
+                            if (mediaType === 'tv') {
+                                navigate(`/details/tv/${tmdbId}`, { replace: true });
+                            } else {
+                                navigate('/', { replace: true });
+                            }
+                        }}
                         className="flex items-center justify-center w-12 h-12 text-white hover:text-white/80 transition-colors"
                         aria-label="Go back"
                     >
@@ -132,6 +319,31 @@ export function Watch() {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 title="Video Player"
             />
+
+
+            {/* Persistent Next Episode Button - TV Shows Only */}
+            {mediaType === 'tv' && nextEpisodeData && !autoPlayCancelled && (
+                <NextEpisodeButton
+                    seasonNumber={nextEpisodeData.season}
+                    episodeNumber={nextEpisodeData.episode}
+                    onClick={handleCountdownComplete}
+                    visible={showControls}
+                />
+            )}
+
+            {/* Next Episode Overlay - TV Shows Only */}
+            {showNextEpisodeOverlay && nextEpisodeData && (
+                <NextEpisodeOverlay
+                    episodeThumbnail={nextEpisodeData.thumbnail}
+                    episodeTitle={nextEpisodeData.title}
+                    seasonNumber={nextEpisodeData.season}
+                    episodeNumber={nextEpisodeData.episode}
+                    totalSeconds={15}
+                    onHide={handleHideOverlay}
+                    onCountdownComplete={handleCountdownComplete}
+                    onPlayNow={handleCountdownComplete}
+                />
+            )}
         </div>
     );
 }
