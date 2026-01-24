@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, ArrowLeft, Calendar, Star, Heart, Bookmark } from 'lucide-react';
+import { Play, ArrowLeft, Calendar, Star, Bookmark } from 'lucide-react';
 import { getMediaDetails } from '../services/tmdb';
 import { getContinueWatchingItem } from '../services/storage';
-import { favoritesApi } from '../services/favorites';
+
 import { watchlistApi } from '../services/watchlist';
 import { useAuth } from '../contexts/AuthContext';
 import { BadgePills } from '../components/BadgePills';
@@ -20,7 +20,7 @@ export function Details() {
     const [media, setMedia] = useState<MediaItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isFavorite, setIsFavorite] = useState(false);
+
     const [isInWatchlist, setIsInWatchlist] = useState(false);
 
     const fetchDetails = async () => {
@@ -55,47 +55,28 @@ export function Details() {
         }
     };
 
-    // Fetch favorites and watchlist status for logged in users
+    // Fetch watchlist status for logged in users
     useEffect(() => {
-        const fetchFavoritesAndWatchlist = async () => {
+        const fetchWatchlist = async () => {
             if (!isAuthenticated || !tmdbId) return;
 
             try {
-                const [favorites, watchlist] = await Promise.all([
-                    favoritesApi.getAll(),
-                    watchlistApi.getAll()
-                ]);
-
+                const watchlist = await watchlistApi.getAll();
                 const numericTmdbId = parseInt(tmdbId);
-                setIsFavorite(favorites.some(f => f.tmdb_id === numericTmdbId));
-                setIsInWatchlist(watchlist.some(w => w.tmdb_id === numericTmdbId));
+                setIsInWatchlist(watchlist.some((w: any) => w.tmdb_id === numericTmdbId));
             } catch (err) {
-                console.error('Error fetching favorites/watchlist:', err);
+                console.error('Error fetching watchlist:', err);
             }
         };
 
-        fetchFavoritesAndWatchlist();
+        fetchWatchlist();
     }, [isAuthenticated, tmdbId]);
 
     useEffect(() => {
         fetchDetails();
     }, [type, tmdbId]);
 
-    const toggleFavorite = async () => {
-        if (!media || !isAuthenticated) return;
 
-        try {
-            if (isFavorite) {
-                await favoritesApi.remove(media.tmdbId, media.type);
-                setIsFavorite(false);
-            } else {
-                await favoritesApi.add(media.tmdbId, media.type);
-                setIsFavorite(true);
-            }
-        } catch (err) {
-            console.error('Error toggling favorite:', err);
-        }
-    };
 
     const toggleWatchlist = async () => {
         if (!media || !isAuthenticated) return;
@@ -197,20 +178,6 @@ export function Details() {
                         <Play className="w-6 h-6 fill-black" />
                         <span>Play Now</span>
                     </button>
-
-                    {/* Favorites Button - Logged In Only */}
-                    {isAuthenticated && (
-                        <button
-                            onClick={toggleFavorite}
-                            className={`flex items-center gap-2 px-6 py-3 font-medium text-base rounded-lg border-2 transition-all duration-200 ${isFavorite
-                                ? 'bg-accent text-black border-accent hover:bg-accent-light'
-                                : 'bg-white/10 text-white border-white/30 hover:bg-white/20 hover:border-white/50 backdrop-blur-sm'
-                                }`}
-                        >
-                            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
-                            <span>{isFavorite ? 'In Favorites' : 'Add to Favorites'}</span>
-                        </button>
-                    )}
 
                     {/* Watchlist Button - Logged In Only */}
                     {isAuthenticated && (

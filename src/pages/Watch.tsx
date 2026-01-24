@@ -285,13 +285,8 @@ export function Watch() {
             onMouseLeave={() => setShowControls(false)}
             onTouchStart={() => setShowControls(!showControls)}
         >
-            {/* Back Arrow Overlay - Appears on hover/touch */}
-            <div
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showControls
-                    ? 'opacity-100 translate-y-0'
-                    : 'opacity-0 -translate-y-full pointer-events-none'
-                    }`}
-            >
+            {/* Back Arrow Overlay - Always Visible */}
+            <div className="fixed top-0 left-0 right-0 z-50">
                 <div className="p-6">
                     <button
                         onClick={() => {
@@ -303,7 +298,7 @@ export function Watch() {
                                 navigate('/', { replace: true });
                             }
                         }}
-                        className="flex items-center justify-center w-12 h-12 text-white hover:text-white/80 transition-colors"
+                        className="flex items-center justify-center w-12 h-12 text-accent hover:text-accent-light transition-colors"
                         aria-label="Go back"
                     >
                         <ArrowLeft className="w-8 h-8" strokeWidth={2.5} />
