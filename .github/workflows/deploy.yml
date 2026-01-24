@@ -2,10 +2,8 @@ name: Deploy to Server
 
 on:
   push:
-    branches:
-      - main
-   # tags:
-   #   -  "dev-*"
+    tags:
+      -  "dev-*"
 
 jobs:
   build-and-deploy:
@@ -31,17 +29,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.USR_TOKEN }}
 
-      # - name: Build and push backend image
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: ./backend
-      #     file: ./backend/Dockerfile
-      #     push: true
-      #     tags: |
-      #       ghcr.io/ibrahimfattah/beast-movies/backend:latest
-      #       ghcr.io/ibrahimfattah/beast-movies/backend:${{ github.sha }}
-      #     cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/backend:latest
-      #     cache-to: type=inline
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/ibrahimfattah/beast-movies/backend:latest
+            ghcr.io/ibrahimfattah/beast-movies/backend:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/backend:latest
+          cache-to: type=inline
           
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -59,34 +57,34 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/frontend:latest
           cache-to: type=inline
 
-      # - name: Deploy to Server
-      #   uses: appleboy/ssh-action@v1.0.0
-      #   with:
-      #     host: ${{ secrets.SERVER_IP }}
-      #     username: ${{ secrets.SSH_USERNAME }}
-      #     key: ${{ secrets.SSH_KEY }}
-      #     script: |
-      #       # Navigate to app directory
-      #       cd /root/app-deployment || exit 1
-      #       # pruning
-      #       docker container prune -a -f
-      #       docker image prune -a -f
-      #       docker system prune -a -f
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # Navigate to app directory
+            cd /root/app-deployment || exit 1
+            # pruning
+            docker container prune -a -f
+            docker image prune -a -f
+            docker system prune -a -f
             
-      #       # Pull latest changes
-      #       # git pull origin main
+            # Pull latest changes
+            # git pull origin main
             
-      #       docker stop beastmovies-backend || true
-      #       docker rm beastmovies-backend  || true
+            docker stop beastmovies-backend || true
+            docker rm beastmovies-backend  || true
             
-      #       docker stop beastmovies-frontend  || true
-      #       docker rm beastmovies-frontend || true           
+            docker stop beastmovies-frontend  || true
+            docker rm beastmovies-frontend || true           
             
-      #       echo "Deploying to dev environment ..."
-      #       docker login ghcr.io -u ${{ github.actor }} --password "${{ secrets.USR_TOKEN }}"
+            echo "Deploying to dev environment ..."
+            docker login ghcr.io -u ${{ github.actor }} --password "${{ secrets.USR_TOKEN }}"
             
-      #       # Pull latest Docker images
-      #       docker pull ghcr.io/ibrahimfattah/beast-movies/backend:latest
-      #       docker pull ghcr.io/ibrahimfattah/beast-movies/frontend:latest
+            # Pull latest Docker images
+            docker pull ghcr.io/ibrahimfattah/beast-movies/backend:latest
+            docker pull ghcr.io/ibrahimfattah/beast-movies/frontend:latest
             
-      #       /root/app-deployment/load-env.sh
+            /root/app-deployment/load-env.sh
