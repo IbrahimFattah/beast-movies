@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
-import { Play, Star } from 'lucide-react';
+import { Play, Star, X } from 'lucide-react';
 import { MediaItem } from '../types/media';
 
 interface PosterCardProps {
     media: MediaItem;
+    onRemove?: () => void;
 }
 
-export function PosterCard({ media }: PosterCardProps) {
+export function PosterCard({ media, onRemove }: PosterCardProps) {
     // If item has continue watching data, link directly to watch page to resume
     // Otherwise, link to details page
     let linkUrl: string;
@@ -74,6 +75,21 @@ export function PosterCard({ media }: PosterCardProps) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Remove Button - Only for Continue Watching items with onRemove handler */}
+                    {media.continueWatching && onRemove && (
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onRemove();
+                            }}
+                            className="absolute top-5 right-3 z-30 w-8 h-8 rounded-full bg-black/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-accent hover:scale-110 border border-white/20 hover:border-accent shadow-lg hover:glow-orange-sm"
+                            aria-label="Remove from Continue Watching"
+                        >
+                            <X className="w-5 h-5 text-white" strokeWidth={2.5} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Continue Watching Progress Bar with orange glow */}

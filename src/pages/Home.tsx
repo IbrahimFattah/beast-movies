@@ -5,7 +5,7 @@ import { RowCarousel } from '../components/RowCarousel';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { getTrending, getPopularMovies, getPopularTVShows, getTopRatedMovies, getMediaDetails } from '../services/tmdb';
-import { getContinueWatching } from '../services/storage';
+import { getContinueWatching, removeContinueWatching } from '../services/storage';
 import { continueWatchingApi } from '../services/continueWatching';
 import { favoritesApi } from '../services/favorites';
 import { watchlistApi } from '../services/watchlist';
@@ -164,6 +164,23 @@ export function Home() {
         }
     };
 
+    const handleRemoveContinueWatching = async (tmdbId: number) => {
+        try {
+            // Remove from backend or localStorage
+            if (isAuthenticated) {
+                await continueWatchingApi.remove(tmdbId);
+            } else {
+                removeContinueWatching(tmdbId);
+            }
+
+            // Update local state immediately for smooth UX
+            setContinueWatchingItems(prev => prev.filter(item => item.tmdbId !== tmdbId));
+        } catch (error) {
+            console.error('Failed to remove from continue watching:', error);
+            // Optionally show error toast to user
+        }
+    };
+
     useEffect(() => {
         fetchData();
     }, [isAuthenticated]);
@@ -198,7 +215,10 @@ export function Home() {
                     {continueWatchingItems.length > 0 && (
                         <section className="mb-12">
                             <SectionTitle title="Continue Watching" />
-                            <RowCarousel items={continueWatchingItems} />
+                            <RowCarousel
+                                items={continueWatchingItems}
+                                onRemove={handleRemoveContinueWatching}
+                            />
                         </section>
                     )}
 

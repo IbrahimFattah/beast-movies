@@ -1,4 +1,4 @@
-interface VidSrcEmbedParams {
+export interface StreamingEmbedParams {
     type: 'movie' | 'tv';
     tmdbId: number;
     season?: number;
@@ -10,7 +10,7 @@ interface VidSrcEmbedParams {
  * @param params - Configuration for the embed
  * @returns Complete embed URL string
  */
-export function buildVidSrcEmbedUrl(params: VidSrcEmbedParams): string {
+export function buildVidSrcEmbedUrl(params: StreamingEmbedParams): string {
     const { type, tmdbId, season, episode } = params;
 
     const baseUrl = 'https://vidsrc.to/embed';

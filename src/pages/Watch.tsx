@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { buildVidSrcEmbedUrl } from '../utils/vidsrc';
+import { buildVidLinkEmbedUrl } from '../utils/vidlink';
+import { buildVidKingEmbedUrl } from '../utils/vidking';
+import { StreamingProvider, DEFAULT_PROVIDER } from '../types/streaming';
 import { useAuth } from '../contexts/AuthContext';
 import { saveContinueWatching } from '../services/storage';
 import { continueWatchingApi } from '../services/continueWatching';
 import { getNextEpisode, getEpisodeRuntime, buildImageUrl, IMAGE_SIZES } from '../services/tmdb';
 import { NextEpisodeOverlay } from '../components/NextEpisodeOverlay';
 import { NextEpisodeButton } from '../components/NextEpisodeButton';
+import { ProviderSelector } from '../components/ProviderSelector';
 
 export function Watch() {
     const { tmdbId, season, episode } = useParams<{
@@ -19,6 +23,12 @@ export function Watch() {
     const location = useLocation();
     const { isAuthenticated } = useAuth();
     const [showControls, setShowControls] = useState(true);
+
+    // Streaming provider state
+    const [selectedProvider, setSelectedProvider] = useState<StreamingProvider>(() => {
+        const saved = localStorage.getItem('streamingProvider');
+        return (saved as StreamingProvider) || DEFAULT_PROVIDER;
+    });
 
     // Auto-play next episode state
     const [showNextEpisodeOverlay, setShowNextEpisodeOverlay] = useState(false);
@@ -235,11 +245,22 @@ export function Watch() {
         );
     }
 
-    // Build embed URL
+    // Handle provider change
+    const handleProviderChange = (provider: StreamingProvider) => {
+        setSelectedProvider(provider);
+        localStorage.setItem('streamingProvider', provider);
+    };
+
+    // Build embed URL based on selected provider
     let embedUrl: string;
     try {
+        const buildUrl =
+            selectedProvider === 'vidsrc' ? buildVidSrcEmbedUrl :
+                selectedProvider === 'vidlink' ? buildVidLinkEmbedUrl :
+                    buildVidKingEmbedUrl;
+
         if (mediaType === 'movie') {
-            embedUrl = buildVidSrcEmbedUrl({
+            embedUrl = buildUrl({
                 type: 'movie',
                 tmdbId: parseInt(tmdbId),
             });
@@ -247,7 +268,7 @@ export function Watch() {
             if (!season || !episode) {
                 throw new Error('Season and episode required for TV shows');
             }
-            embedUrl = buildVidSrcEmbedUrl({
+            embedUrl = buildUrl({
                 type: 'tv',
                 tmdbId: parseInt(tmdbId),
                 season: parseInt(season),
@@ -305,6 +326,13 @@ export function Watch() {
                     </button>
                 </div>
             </div>
+
+            {/* Provider Selector */}
+            <ProviderSelector
+                selectedProvider={selectedProvider}
+                onProviderChange={handleProviderChange}
+                visible={showControls}
+            />
 
             {/* Fullscreen Video Player */}
             <iframe

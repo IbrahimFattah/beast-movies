@@ -6,9 +6,10 @@ import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 
 interface RowCarouselProps {
     items: MediaItem[];
+    onRemove?: (tmdbId: number) => void;
 }
 
-export function RowCarousel({ items }: RowCarouselProps) {
+export function RowCarousel({ items, onRemove }: RowCarouselProps) {
     const { scrollRef, scrollLeft, scrollRight, canScrollLeft, canScrollRight, handleScroll } = useHorizontalScroll();
 
     useEffect(() => {
@@ -47,7 +48,11 @@ export function RowCarousel({ items }: RowCarouselProps) {
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 {items.map((item) => (
-                    <PosterCard key={item.id} media={item} />
+                    <PosterCard
+                        key={item.id}
+                        media={item}
+                        onRemove={onRemove ? () => onRemove(item.tmdbId) : undefined}
+                    />
                 ))}
             </div>
 

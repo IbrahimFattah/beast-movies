@@ -23,25 +23,37 @@ export function Search() {
 
     const performSearch = async (searchTerm: string) => {
         if (!searchTerm.trim()) {
+            console.log('[Search] Empty search term, clearing results');
             setAllResults([]);
             setFilteredResults([]);
             setHasSearched(false);
             return;
         }
 
+        console.log('[Search] Starting search for:', searchTerm);
         setLoading(true);
         setError(null);
         setHasSearched(true);
 
         try {
+            console.log('[Search] Calling TMDB searchMulti...');
             const data = await searchMulti(searchTerm);
+            console.log('[Search] TMDB returned:', data.length, 'results');
+            console.log('[Search] First 3 results:', data.slice(0, 3).map(r => ({ title: r.title, type: r.type, tmdbId: r.tmdbId })));
+
             setAllResults(data);
             setFilteredResults(data);
+            console.log('[Search] Results set successfully');
         } catch (err) {
-            console.error('Search error:', err);
+            console.error('[Search] Search error:', err);
+            console.error('[Search] Error details:', {
+                message: err instanceof Error ? err.message : 'Unknown error',
+                stack: err instanceof Error ? err.stack : undefined
+            });
             setError(err instanceof Error ? err.message : 'Failed to search');
         } finally {
             setLoading(false);
+            console.log('[Search] Search complete, loading:', false);
         }
     };
 

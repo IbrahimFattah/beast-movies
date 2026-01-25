@@ -174,7 +174,18 @@ export async function searchMulti(query: string, page: number = 1): Promise<Medi
     });
 
     return data.results
-        .filter(item => 'title' in item || 'name' in item) // Filter out people
+        .filter((item: any) => {
+            // Filter out people explicitly by media_type
+            if (item.media_type === 'person') {
+                return false;
+            }
+            // Filter out items without vote_average (prevents .toFixed() crash)
+            if (item.vote_average === undefined || item.vote_average === null) {
+                return false;
+            }
+            // Must be either a movie or TV show
+            return 'title' in item || 'name' in item;
+        })
         .map(item => {
             if ('title' in item) {
                 return mapMovieToMediaItem(item as TMDBMovie);
