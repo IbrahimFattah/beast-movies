@@ -5,6 +5,7 @@ import { getMediaDetails } from '../services/tmdb';
 import { getContinueWatchingItem } from '../services/storage';
 
 import { watchlistApi } from '../services/watchlist';
+import { continueWatchingApi } from '../services/continueWatching';
 import { useAuth } from '../contexts/AuthContext';
 import { BadgePills } from '../components/BadgePills';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -37,7 +38,21 @@ export function Details() {
             const data = await getMediaDetails(type as 'movie' | 'tv', parseInt(tmdbId));
 
             // Merge with continue watching data
-            const watchData = getContinueWatchingItem(parseInt(tmdbId));
+            let watchData = null;
+
+            // Try to get from server if authenticated, otherwise from localStorage
+            if (isAuthenticated) {
+                try {
+                    const serverData = await continueWatchingApi.getAll();
+                    watchData = serverData.find(item => item.tmdbId === parseInt(tmdbId));
+                } catch (err) {
+                    console.error('Failed to fetch from server, falling back to localStorage:', err);
+                    watchData = getContinueWatchingItem(parseInt(tmdbId));
+                }
+            } else {
+                watchData = getContinueWatchingItem(parseInt(tmdbId));
+            }
+
             if (watchData) {
                 data.continueWatching = {
                     progress: watchData.progress,
@@ -74,7 +89,7 @@ export function Details() {
 
     useEffect(() => {
         fetchDetails();
-    }, [type, tmdbId]);
+    }, [type, tmdbId, isAuthenticated]);
 
 
 
@@ -176,8 +191,32 @@ export function Details() {
                         className="flex items-center gap-3 px-8 py-4 bg-white text-black font-bold text-lg rounded-lg hover:bg-gray-200 transition-all duration-200 hover:scale-105 shadow-lg"
                     >
                         <Play className="w-6 h-6 fill-black" />
-                        <span>Play Now</span>
+                        <span>{media.continueWatching ? 'Resume' : 'Play Now'}</span>
                     </button>
+
+                    {/* Continue Watching Progress Indicator */}
+                    {media.continueWatching && (
+                        <div className="flex items-center gap-3 px-6 py-3 bg-accent/20 text-white rounded-lg border-2 border-accent/50 backdrop-blur-sm">
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold text-accent">In Progress</span>
+                                {media.type === 'tv' && media.continueWatching.season && media.continueWatching.episode ? (
+                                    <span className="text-xs text-gray-300">
+                                        S{media.continueWatching.season} E{media.continueWatching.episode} • {media.continueWatching.progress}% watched
+                                    </span>
+                                ) : (
+                                    <span className="text-xs text-gray-300">
+                                        {media.continueWatching.progress}% watched
+                                    </span>
+                                )}
+                            </div>
+                            <div className="w-24 h-2 bg-dark-600 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-accent-dark to-accent transition-all duration-500"
+                                    style={{ width: `${media.continueWatching.progress}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Watchlist Button - Logged In Only */}
                     {isAuthenticated && (

@@ -44,6 +44,10 @@ export function Watch() {
     const pathSegments = location.pathname.split('/');
     const mediaType = pathSegments[2] as 'movie' | 'tv';
 
+    // Progress tracking
+    const [watchStartTime] = useState(Date.now());
+    const [hasUpdatedProgress, setHasUpdatedProgress] = useState(false);
+
     // Save progress when starting to watch
     useEffect(() => {
         if (!tmdbId || !mediaType || (mediaType !== 'movie' && mediaType !== 'tv')) {
@@ -55,28 +59,69 @@ export function Watch() {
             const seasonNum = season ? parseInt(season) : undefined;
             const episodeNum = episode ? parseInt(episode) : undefined;
 
-            // Save with 0 progress initially (marks as "started watching")
+            // Save with 5% progress initially (marks as "started watching")
             if (isAuthenticated) {
                 try {
                     await continueWatchingApi.upsert(
                         numericTmdbId,
                         mediaType,
-                        0,
+                        5,
                         seasonNum,
                         episodeNum
                     );
                 } catch (err) {
                     console.error('Failed to save continue watching to server:', err);
                     // Fall back to localStorage
-                    saveContinueWatching(numericTmdbId, mediaType, 0, seasonNum, episodeNum);
+                    saveContinueWatching(numericTmdbId, mediaType, 5, seasonNum, episodeNum);
                 }
             } else {
-                saveContinueWatching(numericTmdbId, mediaType, 0, seasonNum, episodeNum);
+                saveContinueWatching(numericTmdbId, mediaType, 5, seasonNum, episodeNum);
             }
         };
 
         saveProgress();
     }, [tmdbId, mediaType, season, episode, isAuthenticated]);
+
+    // Update progress based on watch time when user leaves or navigates away
+    useEffect(() => {
+        const updateProgressOnLeave = async () => {
+            if (!tmdbId || !mediaType || hasUpdatedProgress) return;
+
+            const watchDuration = (Date.now() - watchStartTime) / 1000 / 60; // in minutes
+            const numericTmdbId = parseInt(tmdbId);
+            const seasonNum = season ? parseInt(season) : undefined;
+            const episodeNum = episode ? parseInt(episode) : undefined;
+
+            // Estimate progress: for TV shows ~45min, movies ~120min
+            const estimatedDuration = mediaType === 'tv' ? 45 : 120;
+            const progress = Math.min(Math.round((watchDuration / estimatedDuration) * 100), 95);
+
+            // Only update if progress is significant (more than 5 minutes watched)
+            if (watchDuration > 5) {
+                try {
+                    if (isAuthenticated) {
+                        await continueWatchingApi.upsert(
+                            numericTmdbId,
+                            mediaType,
+                            progress,
+                            seasonNum,
+                            episodeNum
+                        );
+                    } else {
+                        saveContinueWatching(numericTmdbId, mediaType, progress, seasonNum, episodeNum);
+                    }
+                    setHasUpdatedProgress(true);
+                } catch (err) {
+                    console.error('Failed to update progress:', err);
+                }
+            }
+        };
+
+        // Update progress when component unmounts
+        return () => {
+            updateProgressOnLeave();
+        };
+    }, [tmdbId, mediaType, season, episode, isAuthenticated, watchStartTime, hasUpdatedProgress]);
 
     // Handle mouse movement to show/hide controls and next episode button
     useEffect(() => {

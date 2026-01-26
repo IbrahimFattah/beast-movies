@@ -46,6 +46,15 @@ export function PosterCard({ media, onRemove }: PosterCardProps) {
                     loading="lazy"
                 />
 
+                {/* Season/Episode Badge - Top Left (for TV shows with continue watching) */}
+                {media.continueWatching && media.type === 'tv' && media.continueWatching.season && media.continueWatching.episode && (
+                    <div className="absolute top-2 left-2 z-30">
+                        <span className="inline-block px-2 py-1 bg-accent/90 text-black font-bold text-[10px] rounded backdrop-blur-sm shadow-lg border border-accent-light">
+                            S{media.continueWatching.season} E{media.continueWatching.episode}
+                        </span>
+                    </div>
+                )}
+
                 {/* Enhanced Hover Overlay with glassmorphism */}
                 <div className="absolute inset-0 z-20 bg-gradient-to-t from-black via-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500">
                     {/* Play Button - Centered with glow */}
@@ -61,6 +70,13 @@ export function PosterCard({ media, onRemove }: PosterCardProps) {
                         <h3 className="text-white font-bold text-sm mb-2 line-clamp-2">
                             {media.title}
                         </h3>
+
+                        {/* Season/Episode Info for TV shows with continue watching */}
+                        {media.continueWatching && media.type === 'tv' && media.continueWatching.season && media.continueWatching.episode && (
+                            <div className="text-xs text-accent font-semibold mb-1">
+                                Season {media.continueWatching.season}, Episode {media.continueWatching.episode}
+                            </div>
+                        )}
 
                         {/* Media Type and Rating */}
                         <div className="flex items-center justify-between text-xs">
