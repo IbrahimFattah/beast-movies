@@ -23,12 +23,6 @@ services:
     # For local development:
     build: ./backend
 
-    # For production - choose one:
-    # Docker Hub:
-    # image: YOUR_DOCKER_USERNAME/beast-movies-backend:latest
-    # GitHub Container Registry:
-    # image: ghcr.io/ibrahimfattah/beast-movies/backend:latest
-
     container_name: beastmovies-backend
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}

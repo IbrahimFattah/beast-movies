@@ -212,7 +212,7 @@ export function Watch() {
                 console.log('DEBUG: Fetched runtime:', runtime, 'minutes');
 
                 // Show overlay at 85% of runtime (convert minutes to milliseconds)
-                const triggerTime = runtime * 60 * 1000 * 0.85;
+                const triggerTime = runtime * 60 * 1000 * 0.95;
                 console.log('DEBUG: Trigger time set for:', triggerTime, 'ms');
                 console.log('DEBUG: Will show overlay in approx:', triggerTime / 1000, 'seconds');
 
