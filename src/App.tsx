@@ -7,6 +7,7 @@ import { Home } from './pages/Home';
 import { Details } from './pages/Details';
 import { Watch } from './pages/Watch';
 import { Search } from './pages/Search';
+import { Browse } from './pages/Browse';
 
 function AppContent() {
     const location = useLocation();
@@ -19,6 +20,7 @@ function AppContent() {
             <main className={isWatchPage ? '' : 'flex-1'}>
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/browse" element={<Browse />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/details/:type/:tmdbId" element={<Details />} />
                     <Route path="/watch/movie/:tmdbId" element={<Watch />} />

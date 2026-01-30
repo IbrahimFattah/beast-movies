@@ -70,9 +70,34 @@ export function Navbar() {
                             </Link>
                         </div>
 
+                        {/* Navigation Links */}
+                        <div className="hidden md:flex items-center gap-6 flex-shrink-0">
+                            <Link
+                                to="/"
+                                className={`text-white hover:text-accent transition-colors font-medium ${location.pathname === '/' ? 'text-accent' : ''
+                                    }`}
+                            >
+                                Home
+                            </Link>
+                            <Link
+                                to="/browse"
+                                className={`text-white hover:text-accent transition-colors font-medium ${location.pathname === '/browse' ? 'text-accent' : ''
+                                    }`}
+                            >
+                                Browse
+                            </Link>
+                            <Link
+                                to="/search"
+                                className={`text-white hover:text-accent transition-colors font-medium ${location.pathname === '/search' ? 'text-accent' : ''
+                                    }`}
+                            >
+                                Search
+                            </Link>
+                        </div>
+
                         {/* Search Bar - Center (Home page only) */}
                         {isHomePage && (
-                            <div className="flex-1 max-w-2xl hidden md:block">
+                            <div className="flex-1 max-w-2xl hidden lg:block">
                                 <form onSubmit={handleSearchSubmit} className="w-full">
                                     <div className="relative">
                                         <input
