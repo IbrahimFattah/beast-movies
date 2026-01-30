@@ -12,14 +12,7 @@ interface FilterPanelProps {
     isMobile?: boolean;
 }
 
-const SORT_OPTIONS = [
-    { value: 'popularity.desc', label: 'Popularity (High to Low)' },
-    { value: 'popularity.asc', label: 'Popularity (Low to High)' },
-    { value: 'vote_average.desc', label: 'Rating (High to Low)' },
-    { value: 'vote_average.asc', label: 'Rating (Low to High)' },
-    { value: 'primary_release_date.desc', label: 'Release Date (Newest)' },
-    { value: 'primary_release_date.asc', label: 'Release Date (Oldest)' },
-];
+
 
 export function FilterPanel({
     filters,
@@ -35,8 +28,6 @@ export function FilterPanel({
         providers: true,
         genres: true,
         year: true,
-        rating: true,
-        sort: true,
     });
 
     const currentYear = new Date().getFullYear();
@@ -97,7 +88,7 @@ export function FilterPanel({
     );
 
     return (
-        <div className={`bg-dark-800 ${isMobile ? 'h-full overflow-y-auto' : 'rounded-lg'} p-6 border border-dark-600`}>
+        <div className={`bg-dark-800 ${isMobile ? 'h-full' : 'rounded-lg max-h-[calc(100vh-150px)]'} overflow-y-auto hover:overflow-y-scroll p-6 border border-dark-600 filter-panel-scroll`}>
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -237,46 +228,9 @@ export function FilterPanel({
                 )}
             </div>
 
-            {/* Rating Range */}
-            <div className="mb-6">
-                <SectionHeader title="Minimum Rating" section="rating" />
-                {expandedSections.rating && (
-                    <div className="mt-3">
-                        <div className="flex items-center gap-3">
-                            <input
-                                type="range"
-                                min="0"
-                                max="10"
-                                step="0.5"
-                                value={filters.ratingMin || 0}
-                                onChange={(e) => updateFilters({ ratingMin: parseFloat(e.target.value) })}
-                                className="flex-1 accent-accent"
-                            />
-                            <span className="text-white font-semibold min-w-[3rem] text-center">
-                                {(filters.ratingMin || 0).toFixed(1)}+
-                            </span>
-                        </div>
-                    </div>
-                )}
-            </div>
 
-            {/* Sort */}
-            <div className="mb-6">
-                <SectionHeader title="Sort By" section="sort" />
-                {expandedSections.sort && (
-                    <select
-                        value={filters.sortBy || 'popularity.desc'}
-                        onChange={(e) => updateFilters({ sortBy: e.target.value })}
-                        className="w-full mt-3 px-3 py-2 bg-dark-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-accent border border-dark-600"
-                    >
-                        {SORT_OPTIONS.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
-                )}
-            </div>
+
+
 
             {/* Clear Filters Button */}
             <button

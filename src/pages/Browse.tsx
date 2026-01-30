@@ -83,6 +83,7 @@ export function Browse() {
                 genre: filters.genres[0], // Use first genre if any
                 year: filters.yearFrom,
                 page: filters.page,
+                providers: filters.providers, // Pass providers filter
             });
             setResults(data);
             setPage(filters.page);
@@ -120,9 +121,9 @@ export function Browse() {
                         <Link
                             to="/"
                             className="inline-flex items-center gap-2 text-white hover:text-accent transition-colors"
+                            aria-label="Back to Home"
                         >
-                            <ArrowLeft className="w-5 h-5" />
-                            <span className="hidden sm:inline">Back to Home</span>
+                            <ArrowLeft className="w-7 h-7 text-accent" />
                         </Link>
                         <h1 className="text-2xl md:text-3xl font-bold text-white">Browse Catalog</h1>
                     </div>

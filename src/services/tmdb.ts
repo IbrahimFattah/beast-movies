@@ -294,6 +294,7 @@ export async function discoverMulti(
         genre?: number;
         year?: number;
         page?: number;
+        providers?: number[];
     } = {}
 ): Promise<MediaItem[]> {
     const page = filters.page || 1;
@@ -303,6 +304,10 @@ export async function discoverMulti(
         const params: Record<string, string> = { page: page.toString() };
         if (filters.genre) params.with_genres = filters.genre.toString();
         if (filters.year) params.primary_release_year = filters.year.toString();
+        if (filters.providers && filters.providers.length > 0) {
+            params.with_watch_providers = filters.providers.join('|');
+            params.watch_region = 'US';
+        }
 
         const movieData = await fetchFromTMDB<TMDBResponse<TMDBMovie>>('/discover/movie', params);
         results.push(...movieData.results.map(mapMovieToMediaItem));
@@ -312,6 +317,10 @@ export async function discoverMulti(
         const params: Record<string, string> = { page: page.toString() };
         if (filters.genre) params.with_genres = filters.genre.toString();
         if (filters.year) params.first_air_date_year = filters.year.toString();
+        if (filters.providers && filters.providers.length > 0) {
+            params.with_watch_providers = filters.providers.join('|');
+            params.watch_region = 'US';
+        }
 
         const tvData = await fetchFromTMDB<TMDBResponse<TMDBTVShow>>('/discover/tv', params);
         results.push(...tvData.results.map(mapTVShowToMediaItem));
@@ -339,9 +348,50 @@ export async function getAllGenres(): Promise<{ id: number; name: string }[]> {
 }
 
 /**
- * Get available watch providers (stub for now)
+ * Get available watch providers (streaming platforms)
+ * Returns only the major streaming services
  */
-export async function getWatchProviders(): Promise<{ provider_id: number; provider_name: string; logo_path: string }[]> {
-    // For now, return empty array since we're not using providers in filtering
-    return [];
+export async function getWatchProviders(region: string = 'US'): Promise<{ provider_id: number; provider_name: string; logo_path: string }[]> {
+    try {
+        const [movieProviders, tvProviders] = await Promise.all([
+            fetchFromTMDB<{ results: any[] }>('/watch/providers/movie', { watch_region: region }),
+            fetchFromTMDB<{ results: any[] }>('/watch/providers/tv', { watch_region: region }),
+        ]);
+
+        // Exact provider names we want (based on TMDB data)
+        const wantedProviders = [
+            'Netflix',
+            'Disney Plus',
+            'Apple TV',
+            'Amazon Prime Video',
+            'Hulu',
+            'HBO Max',
+            'Paramount Plus', // Added Paramount+
+        ];
+
+        const allProviders = [...movieProviders.results, ...tvProviders.results];
+        const providerMap = new Map<number, { provider_id: number; provider_name: string; logo_path: string }>();
+        
+        // Find exact matches only
+        allProviders.forEach(provider => {
+            if (wantedProviders.includes(provider.provider_name) && !providerMap.has(provider.provider_id)) {
+                providerMap.set(provider.provider_id, {
+                    provider_id: provider.provider_id,
+                    provider_name: provider.provider_name,
+                    logo_path: provider.logo_path,
+                });
+            }
+        });
+
+        // Return in a consistent order
+        const result = Array.from(providerMap.values());
+        return result.sort((a, b) => {
+            const orderA = wantedProviders.indexOf(a.provider_name);
+            const orderB = wantedProviders.indexOf(b.provider_name);
+            return orderA - orderB;
+        });
+    } catch (err) {
+        console.error('Error fetching watch providers:', err);
+        return [];
+    }
 }
