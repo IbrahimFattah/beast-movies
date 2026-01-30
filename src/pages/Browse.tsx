@@ -35,7 +35,7 @@ export function Browse() {
             try {
                 const [genreData, providerData] = await Promise.all([
                     getAllGenres(),
-                    getWatchProviders('US'),
+                    getWatchProviders(),
                 ]);
                 setGenres(genreData);
                 setProviders(providerData);
@@ -79,11 +79,15 @@ export function Browse() {
         setError(null);
 
         try {
-            const data = await discoverMulti(filters);
-            setResults(data.results);
-            setPage(data.page);
-            setTotalPages(data.totalPages);
-            setTotalResults(data.totalResults);
+            const data = await discoverMulti(filters.type, {
+                genre: filters.genres[0], // Use first genre if any
+                year: filters.yearFrom,
+                page: filters.page,
+            });
+            setResults(data);
+            setPage(filters.page);
+            setTotalPages(10); // TMDB limits to 500 pages but we'll show 10 for now
+            setTotalResults(data.length * filters.page);
             setIsInitialLoad(false);
         } catch (err) {
             console.error('Error fetching results:', err);

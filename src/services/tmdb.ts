@@ -282,3 +282,66 @@ export async function getEpisodeRuntime(tmdbId: number): Promise<number> {
         return 45; // Default to 45 minutes
     }
 }
+
+// Browse/Discover functions
+
+/**
+ * Discover movies and TV shows with filters
+ */
+export async function discoverMulti(
+    type: 'movie' | 'tv' | 'all',
+    filters: {
+        genre?: number;
+        year?: number;
+        page?: number;
+    } = {}
+): Promise<MediaItem[]> {
+    const page = filters.page || 1;
+    const results: MediaItem[] = [];
+
+    if (type === 'all' || type === 'movie') {
+        const params: Record<string, string> = { page: page.toString() };
+        if (filters.genre) params.with_genres = filters.genre.toString();
+        if (filters.year) params.primary_release_year = filters.year.toString();
+
+        const movieData = await fetchFromTMDB<TMDBResponse<TMDBMovie>>('/discover/movie', params);
+        results.push(...movieData.results.map(mapMovieToMediaItem));
+    }
+
+    if (type === 'all' || type === 'tv') {
+        const params: Record<string, string> = { page: page.toString() };
+        if (filters.genre) params.with_genres = filters.genre.toString();
+        if (filters.year) params.first_air_date_year = filters.year.toString();
+
+        const tvData = await fetchFromTMDB<TMDBResponse<TMDBTVShow>>('/discover/tv', params);
+        results.push(...tvData.results.map(mapTVShowToMediaItem));
+    }
+
+    return results;
+}
+
+/**
+ * Get all available genres for movies and TV shows
+ */
+export async function getAllGenres(): Promise<{ id: number; name: string }[]> {
+    const [movieGenres, tvGenres] = await Promise.all([
+        fetchFromTMDB<{ genres: { id: number; name: string }[] }>('/genre/movie/list'),
+        fetchFromTMDB<{ genres: { id: number; name: string }[] }>('/genre/tv/list'),
+    ]);
+
+    // Combine and deduplicate genres
+    const genreMap = new Map<number, string>();
+    [...movieGenres.genres, ...tvGenres.genres].forEach(genre => {
+        genreMap.set(genre.id, genre.name);
+    });
+
+    return Array.from(genreMap.entries()).map(([id, name]) => ({ id, name }));
+}
+
+/**
+ * Get available watch providers (stub for now)
+ */
+export async function getWatchProviders(): Promise<{ provider_id: number; provider_name: string; logo_path: string }[]> {
+    // For now, return empty array since we're not using providers in filtering
+    return [];
+}

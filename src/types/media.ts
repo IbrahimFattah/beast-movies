@@ -107,3 +107,30 @@ export interface ContinueWatchingItem {
     episode?: number;
     lastWatched: number; // timestamp
 }
+
+// Genre type for filtering
+export interface Genre {
+    id: number;
+    name: string;
+}
+
+// Watch Provider type
+export interface WatchProvider {
+    provider_id: number;
+    provider_name: string;
+    logo_path: string;
+}
+
+// Filter options for Browse page
+export interface FilterOptions {
+    type: 'all' | 'movie' | 'tv';
+    genres: number[];
+    providers: number[];
+    region: string;
+    yearFrom?: number;
+    yearTo?: number;
+    ratingMin: number;
+    ratingMax: number;
+    sortBy: string;
+    page: number;
+}
