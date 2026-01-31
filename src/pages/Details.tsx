@@ -78,7 +78,7 @@ export function Details() {
             try {
                 const watchlist = await watchlistApi.getAll();
                 const numericTmdbId = parseInt(tmdbId);
-                setIsInWatchlist(watchlist.some((w: any) => w.tmdb_id === numericTmdbId));
+                setIsInWatchlist(watchlist.some((w: { tmdb_id: number }) => w.tmdb_id === numericTmdbId));
             } catch (err) {
                 console.error('Error fetching watchlist:', err);
             }

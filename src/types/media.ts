@@ -12,6 +12,7 @@ export interface TMDBMovie {
     vote_count: number;
     popularity: number;
     adult: boolean;
+    media_type?: string;
     original_language: string;
 }
 
@@ -29,6 +30,7 @@ export interface TMDBTVShow {
     popularity: number;
     origin_country: string[];
     original_language: string;
+    media_type?: string;
 }
 
 export interface TMDBMovieDetails extends TMDBMovie {

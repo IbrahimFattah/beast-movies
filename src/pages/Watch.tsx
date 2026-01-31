@@ -8,8 +8,7 @@ import { StreamingProvider, DEFAULT_PROVIDER } from '../types/streaming';
 import { useAuth } from '../contexts/AuthContext';
 import { saveContinueWatching } from '../services/storage';
 import { continueWatchingApi } from '../services/continueWatching';
-import { getNextEpisode, getEpisodeRuntime, buildImageUrl, IMAGE_SIZES } from '../services/tmdb';
-import { NextEpisodeOverlay } from '../components/NextEpisodeOverlay';
+import { getNextEpisode } from '../services/tmdb';
 import { NextEpisodeButton } from '../components/NextEpisodeButton';
 import { ProviderSelector } from '../components/ProviderSelector';
 
@@ -30,15 +29,11 @@ export function Watch() {
         return (saved as StreamingProvider) || DEFAULT_PROVIDER;
     });
 
-    // Auto-play next episode state
-    const [showNextEpisodeOverlay, setShowNextEpisodeOverlay] = useState(false);
+    // Next episode state (for the button only, no auto-play)
     const [nextEpisodeData, setNextEpisodeData] = useState<{
         season: number;
         episode: number;
-        title: string;
-        thumbnail: string;
     } | null>(null);
-    const [autoPlayCancelled, setAutoPlayCancelled] = useState(false);
 
     // Extract type from pathname early (needed for save progress)
     const pathSegments = location.pathname.split('/');
@@ -123,7 +118,7 @@ export function Watch() {
         };
     }, [tmdbId, mediaType, season, episode, isAuthenticated, watchStartTime, hasUpdatedProgress]);
 
-    // Handle mouse movement to show/hide controls and next episode button
+    // Handle mouse movement to show/hide controls
     useEffect(() => {
         let timeout: number;
 
@@ -176,103 +171,43 @@ export function Watch() {
         };
     }, []);
 
-
-    // Fetch next episode data and trigger auto-play overlay for TV shows
+    // Fetch next episode data for TV shows (for the button)
     useEffect(() => {
         if (mediaType !== 'tv' || !tmdbId || !season || !episode) {
             return;
         }
 
-        const numericTmdbId = parseInt(tmdbId);
-        const seasonNum = parseInt(season);
-        const episodeNum = parseInt(episode);
-
-        let overlayTimeout: number | null = null;
-
-        const setupAutoPlay = async () => {
+        const fetchNextEpisode = async () => {
             try {
-                // Fetch next episode information
+                const numericTmdbId = parseInt(tmdbId);
+                const seasonNum = parseInt(season);
+                const episodeNum = parseInt(episode);
+
                 const nextEp = await getNextEpisode(numericTmdbId, seasonNum, episodeNum);
 
-                if (!nextEp) {
-                    // No next episode (end of series)
-                    return;
+                if (nextEp) {
+                    setNextEpisodeData({
+                        season: nextEp.season,
+                        episode: nextEp.episode,
+                    });
+                } else {
+                    setNextEpisodeData(null);
                 }
-
-                // Store next episode data for the overlay
-                setNextEpisodeData({
-                    season: nextEp.season,
-                    episode: nextEp.episode,
-                    title: nextEp.data.name,
-                    thumbnail: buildImageUrl(nextEp.data.still_path, IMAGE_SIZES.backdropSmall),
-                });
-
-                // Get episode runtime to calculate when to show overlay
-                const runtime = await getEpisodeRuntime(numericTmdbId);
-                console.log('DEBUG: Fetched runtime:', runtime, 'minutes');
-
-                // Show overlay at 85% of runtime (convert minutes to milliseconds)
-                const triggerTime = runtime * 60 * 1000 * 0.95;
-                console.log('DEBUG: Trigger time set for:', triggerTime, 'ms');
-                console.log('DEBUG: Will show overlay in approx:', triggerTime / 1000, 'seconds');
-
-                // For testing: Show overlay after 10 seconds
-                // const triggerTime = 10000;
-
-                // Set timeout to show overlay
-                overlayTimeout = setTimeout(() => {
-                    if (!autoPlayCancelled) {
-                        setShowNextEpisodeOverlay(true);
-                    }
-                }, triggerTime);
             } catch (err) {
-                console.error('Error setting up auto-play:', err);
+                console.error('Error fetching next episode:', err);
+                setNextEpisodeData(null);
             }
         };
 
-        setupAutoPlay();
+        fetchNextEpisode();
+    }, [tmdbId, season, episode, mediaType]);
 
-        // Cleanup timeout on unmount or when dependencies change
-        return () => {
-            if (overlayTimeout) {
-                clearTimeout(overlayTimeout);
-            }
-        };
-    }, [tmdbId, season, episode, mediaType, autoPlayCancelled]);
-
-    // Reset auto-play state when episode changes
-    useEffect(() => {
-        setShowNextEpisodeOverlay(false);
-        setAutoPlayCancelled(false);
-        setNextEpisodeData(null);
-    }, [tmdbId, season, episode]);
-
-    // Handle hiding the overlay
-    const handleHideOverlay = () => {
-        setShowNextEpisodeOverlay(false);
-        setAutoPlayCancelled(true);
-    };
-
-    // Handle countdown complete - navigate to next episode
-    const handleCountdownComplete = () => {
-        if (nextEpisodeData && !autoPlayCancelled) {
-            // Hide overlay first
-            setShowNextEpisodeOverlay(false);
-
-            // Clear history stack: Replace current state with fresh history
-            // This ensures back button always goes to Details page
-            const detailsUrl = `/details/tv/${tmdbId}`;
-            const nextEpisodeUrl = `/watch/tv/${tmdbId}/${nextEpisodeData.season}/${nextEpisodeData.episode}`;
-
-            // Reset history: Details → Next Episode (only 2 items in stack)
-            window.history.replaceState(null, '', detailsUrl);
-            window.history.pushState(null, '', nextEpisodeUrl);
-
-            // Force a re-render by navigating with replace
-            navigate(nextEpisodeUrl, { replace: true });
+    // Handle next episode navigation
+    const handleNextEpisode = () => {
+        if (nextEpisodeData) {
+            navigate(`/watch/tv/${tmdbId}/${nextEpisodeData.season}/${nextEpisodeData.episode}`);
         }
     };
-
 
     if (!mediaType || !tmdbId || (mediaType !== 'movie' && mediaType !== 'tv')) {
         return (
@@ -388,28 +323,13 @@ export function Watch() {
                 title="Video Player"
             />
 
-
-            {/* Persistent Next Episode Button - TV Shows Only */}
-            {mediaType === 'tv' && nextEpisodeData && !autoPlayCancelled && (
+            {/* Next Episode Button - TV Shows Only */}
+            {mediaType === 'tv' && nextEpisodeData && (
                 <NextEpisodeButton
                     seasonNumber={nextEpisodeData.season}
                     episodeNumber={nextEpisodeData.episode}
-                    onClick={handleCountdownComplete}
+                    onClick={handleNextEpisode}
                     visible={showControls}
-                />
-            )}
-
-            {/* Next Episode Overlay - TV Shows Only */}
-            {showNextEpisodeOverlay && nextEpisodeData && (
-                <NextEpisodeOverlay
-                    episodeThumbnail={nextEpisodeData.thumbnail}
-                    episodeTitle={nextEpisodeData.title}
-                    seasonNumber={nextEpisodeData.season}
-                    episodeNumber={nextEpisodeData.episode}
-                    totalSeconds={15}
-                    onHide={handleHideOverlay}
-                    onCountdownComplete={handleCountdownComplete}
-                    onPlayNow={handleCountdownComplete}
                 />
             )}
         </div>
