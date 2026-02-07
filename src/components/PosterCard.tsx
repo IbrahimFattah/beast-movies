@@ -86,7 +86,7 @@ export function PosterCard({ media, onRemove }: PosterCardProps) {
                             <div className="flex items-center gap-1 px-2 py-1 bg-black/40 rounded-full">
                                 <Star className="w-3 h-3 text-accent fill-accent" />
                                 <span className="text-white font-bold">
-                                    {media.rating.toFixed(1)}
+                                    {(media.rating ?? 0).toFixed(1)}
                                 </span>
                             </div>
                         </div>

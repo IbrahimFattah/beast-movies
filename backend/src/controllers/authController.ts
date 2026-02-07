@@ -46,10 +46,12 @@ export const signup = async (req: Request, res: Response) => {
         );
 
         // Set cookie
+        const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', token, {
             httpOnly: true,
+            secure: isProduction,           // HTTPS only in production
+            sameSite: isProduction ? 'none' : 'lax',  // Allow cross-site in production
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            sameSite: 'lax',
         });
 
         res.status(201).json({
@@ -101,10 +103,12 @@ export const login = async (req: Request, res: Response) => {
         );
 
         // Set cookie
+        const isProduction = process.env.NODE_ENV === 'production';
         res.cookie('token', token, {
             httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
             maxAge: 7 * 24 * 60 * 60 * 1000,
-            sameSite: 'lax',
         });
 
         res.json({
@@ -133,7 +137,13 @@ export const getCurrentUser = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Not authenticated' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
+        let decoded: { userId: number };
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
+        } catch (jwtError) {
+            // Token is invalid or expired - respond immediately, don't hit DB
+            return res.status(401).json({ message: 'Invalid or expired token' });
+        }
 
         const result = await pool.query(
             'SELECT id, username, email, created_at FROM users WHERE id = $1',
@@ -146,6 +156,7 @@ export const getCurrentUser = async (req: Request, res: Response) => {
 
         res.json({ user: result.rows[0] });
     } catch (error) {
-        res.status(401).json({ message: 'Invalid token' });
+        console.error('getCurrentUser error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };

@@ -9,7 +9,7 @@ export function BadgePills({ rating, year, genres }: BadgePillsProps) {
         <div className="flex flex-wrap items-center gap-2">
             {rating && (
                 <span className="px-3 py-1 text-sm font-medium text-white border border-white/30 rounded-full backdrop-blur-sm">
-                    ⭐ {rating.toFixed(1)}/10
+                    ⭐ {(rating ?? 0).toFixed(1)}/10
                 </span>
             )}
             {year && (

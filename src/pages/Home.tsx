@@ -231,10 +231,17 @@ export function Home() {
                     )}
 
                     {/* My Watchlist */}
-                    {watchlistItems.length > 0 && (
+                    {isAuthenticated && (
                         <section className="mb-12">
                             <SectionTitle title="My Watchlist" />
-                            <RowCarousel items={watchlistItems} />
+                            {watchlistItems.length > 0 ? (
+                                <RowCarousel items={watchlistItems} />
+                            ) : (
+                                <div className="text-gray-400 text-center py-8">
+                                    <p>Your watchlist is empty.</p>
+                                    <p className="text-sm mt-2">Add movies and shows to watch later!</p>
+                                </div>
+                            )}
                         </section>
                     )}
 

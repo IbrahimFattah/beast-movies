@@ -259,7 +259,7 @@ export function Details() {
                             <h3 className="text-white font-semibold">Rating</h3>
                         </div>
                         <p className="text-2xl font-bold text-white">
-                            {media.rating.toFixed(1)}/10
+                            {(media.rating ?? 0).toFixed(1)}/10
                         </p>
                     </div>
 
