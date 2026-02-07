@@ -69,7 +69,7 @@ jobs:
             # pruning
             docker container prune -a -f
             docker image prune -a -f
-            docker system prune -a -f
+            # docker system prune -a -f
             
             # Pull latest changes
             # git pull origin main
