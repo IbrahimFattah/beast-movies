@@ -6,6 +6,8 @@ import authRoutes from './routes/auth';
 import favoritesRoutes from './routes/favorites';
 import continueWatchingRoutes from './routes/continueWatching';
 import watchlistRoutes from './routes/watchlist';
+import watchlistHistoryRoutes from './routes/watchlistHistory';
+import watchedRoutes from './routes/watched';
 
 dotenv.config();
 
@@ -51,6 +53,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/continue-watching', continueWatchingRoutes);
 app.use('/api/watchlist', watchlistRoutes);
+app.use('/api/watchlist-history', watchlistHistoryRoutes);
+app.use('/api/watched', watchedRoutes);
 
 // Health check - also checks DB connectivity
 app.get('/health', async (req: express.Request, res: express.Response) => {

@@ -80,15 +80,20 @@ export function Browse() {
 
         try {
             const data = await discoverMulti(filters.type, {
-                genre: filters.genres[0], // Use first genre if any
-                year: filters.yearFrom,
+                genres: filters.genres,
+                yearFrom: filters.yearFrom,
+                yearTo: filters.yearTo,
+                ratingMin: filters.ratingMin,
+                ratingMax: filters.ratingMax,
+                sortBy: filters.sortBy,
                 page: filters.page,
-                providers: filters.providers, // Pass providers filter
+                providers: filters.providers,
+                region: filters.region,
             });
-            setResults(data);
-            setPage(filters.page);
-            setTotalPages(10); // TMDB limits to 500 pages but we'll show 10 for now
-            setTotalResults(data.length * filters.page);
+            setResults(data.items);
+            setPage(data.page);
+            setTotalPages(data.totalPages);
+            setTotalResults(data.totalResults);
             setIsInitialLoad(false);
         } catch (err) {
             console.error('Error fetching results:', err);

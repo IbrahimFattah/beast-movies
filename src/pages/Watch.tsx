@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { buildVidSrcEmbedUrl } from '../utils/vidsrc';
@@ -11,6 +11,8 @@ import { continueWatchingApi } from '../services/continueWatching';
 import { getNextEpisode } from '../services/tmdb';
 import { NextEpisodeButton } from '../components/NextEpisodeButton';
 import { ProviderSelector } from '../components/ProviderSelector';
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export function Watch() {
     const { tmdbId, season, episode } = useParams<{
@@ -39,9 +41,9 @@ export function Watch() {
     const pathSegments = location.pathname.split('/');
     const mediaType = pathSegments[2] as 'movie' | 'tv';
 
-    // Progress tracking
-    const [watchStartTime] = useState(Date.now());
-    const [hasUpdatedProgress, setHasUpdatedProgress] = useState(false);
+    // Progress tracking refs avoid stale state during page lifecycle events.
+    const watchStartTimeRef = useRef(Date.now());
+    const lastSavedProgressRef = useRef(0);
 
     // Save progress when starting to watch
     useEffect(() => {
@@ -50,9 +52,15 @@ export function Watch() {
         }
 
         const saveProgress = async () => {
-            const numericTmdbId = parseInt(tmdbId);
+            const numericTmdbId = parseInt(tmdbId, 10);
+            if (Number.isNaN(numericTmdbId)) {
+                return;
+            }
+
             const seasonNum = season ? parseInt(season) : undefined;
             const episodeNum = episode ? parseInt(episode) : undefined;
+            watchStartTimeRef.current = Date.now();
+            lastSavedProgressRef.current = 5;
 
             // Save with 5% progress initially (marks as "started watching")
             if (isAuthenticated) {
@@ -77,13 +85,19 @@ export function Watch() {
         saveProgress();
     }, [tmdbId, mediaType, season, episode, isAuthenticated]);
 
-    // Update progress based on watch time when user leaves or navigates away
+    // Flush progress on tab hide/page exit so playback history is not lost.
     useEffect(() => {
-        const updateProgressOnLeave = async () => {
-            if (!tmdbId || !mediaType || hasUpdatedProgress) return;
+        if (!tmdbId || !mediaType || (mediaType !== 'movie' && mediaType !== 'tv')) {
+            return;
+        }
 
-            const watchDuration = (Date.now() - watchStartTime) / 1000 / 60; // in minutes
-            const numericTmdbId = parseInt(tmdbId);
+        const buildProgressPayload = () => {
+            const numericTmdbId = parseInt(tmdbId, 10);
+            if (Number.isNaN(numericTmdbId)) {
+                return null;
+            }
+
+            const watchDuration = (Date.now() - watchStartTimeRef.current) / 1000 / 60;
             const seasonNum = season ? parseInt(season) : undefined;
             const episodeNum = episode ? parseInt(episode) : undefined;
 
@@ -92,9 +106,53 @@ export function Watch() {
             const progress = Math.min(Math.round((watchDuration / estimatedDuration) * 100), 95);
 
             // Only update if progress is significant (more than 5 minutes watched)
-            if (watchDuration > 5) {
-                try {
-                    if (isAuthenticated) {
+            if (watchDuration <= 5 || progress <= lastSavedProgressRef.current) {
+                return null;
+            }
+
+            return { numericTmdbId, seasonNum, episodeNum, progress };
+        };
+
+        const updateProgress = async (useKeepalive: boolean) => {
+            const payload = buildProgressPayload();
+            if (!payload) return;
+
+            const { numericTmdbId, seasonNum, episodeNum, progress } = payload;
+
+            try {
+                if (isAuthenticated) {
+                    if (useKeepalive) {
+                        const requestBody = JSON.stringify({
+                            tmdbId: numericTmdbId,
+                            mediaType,
+                            progress,
+                            season: seasonNum,
+                            episode: episodeNum,
+                        });
+
+                        const endpoint = `${API_URL}/continue-watching`;
+                        let sent = false;
+
+                        // sendBeacon is most reliable during unload when API is same-origin.
+                        if (endpoint.startsWith('/') && navigator.sendBeacon) {
+                            sent = navigator.sendBeacon(
+                                endpoint,
+                                new Blob([requestBody], { type: 'application/json' })
+                            );
+                        }
+
+                        if (!sent) {
+                            void fetch(endpoint, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                keepalive: true,
+                                body: requestBody,
+                            }).catch((err) => {
+                                console.error('Failed to persist keepalive progress:', err);
+                            });
+                        }
+                    } else {
                         await continueWatchingApi.upsert(
                             numericTmdbId,
                             mediaType,
@@ -102,21 +160,36 @@ export function Watch() {
                             seasonNum,
                             episodeNum
                         );
-                    } else {
-                        saveContinueWatching(numericTmdbId, mediaType, progress, seasonNum, episodeNum);
                     }
-                    setHasUpdatedProgress(true);
-                } catch (err) {
-                    console.error('Failed to update progress:', err);
+                } else {
+                    saveContinueWatching(numericTmdbId, mediaType, progress, seasonNum, episodeNum);
                 }
+
+                lastSavedProgressRef.current = progress;
+            } catch (err) {
+                console.error('Failed to update progress:', err);
             }
         };
 
-        // Update progress when component unmounts
-        return () => {
-            updateProgressOnLeave();
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                void updateProgress(true);
+            }
         };
-    }, [tmdbId, mediaType, season, episode, isAuthenticated, watchStartTime, hasUpdatedProgress]);
+
+        const handlePageHide = () => {
+            void updateProgress(true);
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('pagehide', handlePageHide);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('pagehide', handlePageHide);
+            void updateProgress(false);
+        };
+    }, [tmdbId, mediaType, season, episode, isAuthenticated]);
 
     // Handle mouse movement to show/hide controls
     useEffect(() => {

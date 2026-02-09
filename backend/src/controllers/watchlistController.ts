@@ -29,6 +29,12 @@ export const addToWatchlist = async (req: AuthRequest, res: Response) => {
             [req.userId, tmdbId, mediaType]
         );
 
+        // Log to watchlist history (fire and forget — don't block the response)
+        pool.query(
+            'INSERT INTO watchlist_history (user_id, tmdb_id, media_type, action) VALUES ($1, $2, $3, $4)',
+            [req.userId, tmdbId, mediaType, 'added']
+        ).catch(err => console.error('Failed to log watchlist history (add):', err));
+
         res.status(201).json({ item: result.rows[0] });
     } catch (error) {
         console.error('Add to watchlist error:', error);
@@ -45,6 +51,12 @@ export const removeFromWatchlist = async (req: AuthRequest, res: Response) => {
             'DELETE FROM watchlists WHERE user_id = $1 AND tmdb_id = $2 AND media_type = $3',
             [req.userId, tmdbId, mediaType]
         );
+
+        // Log to watchlist history (fire and forget)
+        pool.query(
+            'INSERT INTO watchlist_history (user_id, tmdb_id, media_type, action) VALUES ($1, $2, $3, $4)',
+            [req.userId, tmdbId, mediaType, 'removed']
+        ).catch(err => console.error('Failed to log watchlist history (remove):', err));
 
         res.json({ message: 'Removed from watchlist' });
     } catch (error) {

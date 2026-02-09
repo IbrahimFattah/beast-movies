@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, ArrowLeft, Calendar, Star, Bookmark } from 'lucide-react';
-import { getMediaDetails } from '../services/tmdb';
+import { Play, ArrowLeft, Calendar, Star, Bookmark, CheckCircle2 } from 'lucide-react';
+import { getMediaDetails, getSimilarMedia } from '../services/tmdb';
 import { getContinueWatchingItem } from '../services/storage';
 
 import { watchlistApi } from '../services/watchlist';
+import { watchedApi } from '../services/watched';
 import { continueWatchingApi } from '../services/continueWatching';
 import { useAuth } from '../contexts/AuthContext';
 import { BadgePills } from '../components/BadgePills';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { EpisodeSelector } from '../components/EpisodeSelector';
+import { SectionTitle } from '../components/SectionTitle';
+import { RowCarousel } from '../components/RowCarousel';
 import { MediaItem } from '../types/media';
 
 export function Details() {
@@ -23,6 +26,12 @@ export function Details() {
     const [error, setError] = useState<string | null>(null);
 
     const [isInWatchlist, setIsInWatchlist] = useState(false);
+    const [isWatched, setIsWatched] = useState(false);
+
+    // Similar titles state
+    const [similarItems, setSimilarItems] = useState<MediaItem[]>([]);
+    const [similarLoading, setSimilarLoading] = useState(false);
+    const [similarError, setSimilarError] = useState<string | null>(null);
 
     const fetchDetails = async () => {
         if (!type || !tmdbId || (type !== 'movie' && type !== 'tv')) {
@@ -70,28 +79,56 @@ export function Details() {
         }
     };
 
-    // Fetch watchlist status for logged in users
+    // Fetch watchlist + watched status for logged in users
     useEffect(() => {
-        const fetchWatchlist = async () => {
+        const fetchUserStatus = async () => {
             if (!isAuthenticated || !tmdbId) return;
 
             try {
-                const watchlist = await watchlistApi.getAll();
+                const [watchlist, watched] = await Promise.all([
+                    watchlistApi.getAll(),
+                    watchedApi.getAll(),
+                ]);
                 const numericTmdbId = parseInt(tmdbId);
                 setIsInWatchlist(watchlist.some((w: { tmdb_id: number }) => w.tmdb_id === numericTmdbId));
+                setIsWatched(watched.some((w) => w.tmdb_id === numericTmdbId));
             } catch (err) {
-                console.error('Error fetching watchlist:', err);
+                console.error('Error fetching user status:', err);
             }
         };
 
-        fetchWatchlist();
+        fetchUserStatus();
     }, [isAuthenticated, tmdbId]);
 
     useEffect(() => {
         fetchDetails();
     }, [type, tmdbId, isAuthenticated]);
 
+    // Fetch similar titles when media loads
+    const fetchSimilar = async () => {
+        if (!media || !type || (type !== 'movie' && type !== 'tv')) return;
 
+        setSimilarLoading(true);
+        setSimilarError(null);
+
+        try {
+            const items = await getSimilarMedia(type as 'movie' | 'tv', media.tmdbId);
+            // Filter out the current title from similars
+            const filtered = items.filter(item => item.tmdbId !== media.tmdbId);
+            setSimilarItems(filtered.slice(0, 20));
+        } catch (err) {
+            console.error('Error fetching similar titles:', err);
+            setSimilarError(err instanceof Error ? err.message : 'Failed to load similar titles');
+        } finally {
+            setSimilarLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (media) {
+            fetchSimilar();
+        }
+    }, [media?.tmdbId, type]);
 
     const toggleWatchlist = async () => {
         if (!media || !isAuthenticated) return;
@@ -106,6 +143,22 @@ export function Details() {
             }
         } catch (err) {
             console.error('Error toggling watchlist:', err);
+        }
+    };
+
+    const toggleWatched = async () => {
+        if (!media || !isAuthenticated) return;
+
+        try {
+            if (isWatched) {
+                await watchedApi.unmark(media.tmdbId, media.type);
+                setIsWatched(false);
+            } else {
+                await watchedApi.mark(media.tmdbId, media.type);
+                setIsWatched(true);
+            }
+        } catch (err) {
+            console.error('Error toggling watched:', err);
         }
     };
 
@@ -232,6 +285,23 @@ export function Details() {
                         </button>
                     )}
 
+                    {/* Watched Button - Logged In Only */}
+                    {isAuthenticated && (
+                        <button
+                            onClick={toggleWatched}
+                            className={`flex items-center gap-2 px-6 py-3 font-medium text-base rounded-lg border-2 transition-all duration-200 ${isWatched
+                                ? 'bg-green-500 text-white border-green-500 hover:bg-green-600'
+                                : 'bg-white/10 text-white border-white/30 hover:bg-white/20 hover:border-white/50 backdrop-blur-sm'
+                                }`}
+                        >
+                            <CheckCircle2
+                                className={`w-6 h-6 ${isWatched ? 'fill-white text-green-500' : 'text-white'}`}
+                                strokeWidth={2}
+                            />
+                            <span>{isWatched ? 'Watched' : 'Mark as Watched'}</span>
+                        </button>
+                    )}
+
                     {/* Browse Episodes Button - TV Shows Only */}
                     {media.type === 'tv' && (
                         <button
@@ -308,6 +378,38 @@ export function Details() {
                         />
                     </div>
                 )}
+
+                {/* Similar Titles Section */}
+                <div className="mb-12">
+                    <SectionTitle title="Similar Titles" />
+                    {similarLoading && (
+                        <div className="flex gap-3 overflow-hidden">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="flex-shrink-0 w-[160px] md:w-[185px] aspect-[2/3] bg-dark-700 rounded-lg animate-pulse"
+                                />
+                            ))}
+                        </div>
+                    )}
+                    {similarError && !similarLoading && (
+                        <div className="flex items-center gap-3 py-6">
+                            <p className="text-gray-400">Couldn't load similar titles.</p>
+                            <button
+                                onClick={fetchSimilar}
+                                className="text-accent hover:text-accent-dark transition-colors font-medium"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    )}
+                    {!similarLoading && !similarError && similarItems.length === 0 && (
+                        <p className="text-gray-500 py-4">No similar titles found.</p>
+                    )}
+                    {!similarLoading && !similarError && similarItems.length > 0 && (
+                        <RowCarousel items={similarItems} />
+                    )}
+                </div>
             </div>
         </div>
     );

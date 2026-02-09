@@ -29,6 +29,25 @@ interface TMDBWatchProvider {
     logo_path: string;
 }
 
+interface DiscoverFilters {
+    genres?: number[];
+    yearFrom?: number;
+    yearTo?: number;
+    ratingMin?: number;
+    ratingMax?: number;
+    sortBy?: string;
+    page?: number;
+    providers?: number[];
+    region?: string;
+}
+
+interface DiscoverResult {
+    items: MediaItem[];
+    page: number;
+    totalPages: number;
+    totalResults: number;
+}
+
 // Helper to build image URL
 export function buildImageUrl(path: string | null, size: string = IMAGE_SIZES.backdrop): string {
     if (!path) {
@@ -103,7 +122,71 @@ function mapTVShowToMediaItem(tvShow: TMDBTVShow | TMDBTVShowDetails): MediaItem
     };
 }
 
+// Simple in-memory cache for similar titles
+const similarCache = new Map<string, { data: MediaItem[]; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCached(key: string): MediaItem[] | null {
+    const entry = similarCache.get(key);
+    if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+        return entry.data;
+    }
+    similarCache.delete(key);
+    return null;
+}
+
+function setCache(key: string, data: MediaItem[]): void {
+    similarCache.set(key, { data, timestamp: Date.now() });
+}
+
 // API Functions
+
+/**
+ * Get similar movies by TMDB ID (with caching)
+ */
+export async function getSimilarMovies(tmdbId: number, page: number = 1): Promise<MediaItem[]> {
+    const cacheKey = `similar-movie-${tmdbId}-${page}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    const data = await fetchFromTMDB<TMDBResponse<TMDBMovie>>(`/movie/${tmdbId}/similar`, {
+        page: page.toString(),
+    });
+
+    const items = data.results.map(mapMovieToMediaItem);
+    setCache(cacheKey, items);
+    return items;
+}
+
+/**
+ * Get similar TV shows by TMDB ID (with caching)
+ */
+export async function getSimilarTVShows(tmdbId: number, page: number = 1): Promise<MediaItem[]> {
+    const cacheKey = `similar-tv-${tmdbId}-${page}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    const data = await fetchFromTMDB<TMDBResponse<TMDBTVShow>>(`/tv/${tmdbId}/similar`, {
+        page: page.toString(),
+    });
+
+    const items = data.results.map(mapTVShowToMediaItem);
+    setCache(cacheKey, items);
+    return items;
+}
+
+/**
+ * Get similar media (unified function for movie or tv)
+ */
+export async function getSimilarMedia(
+    type: 'movie' | 'tv',
+    tmdbId: number,
+    page: number = 1
+): Promise<MediaItem[]> {
+    return type === 'movie'
+        ? getSimilarMovies(tmdbId, page)
+        : getSimilarTVShows(tmdbId, page);
+}
 
 /**
  * Get trending content (movies and TV shows)
@@ -283,43 +366,79 @@ export async function getNextEpisode(
  */
 export async function discoverMulti(
     type: 'movie' | 'tv' | 'all',
-    filters: {
-        genre?: number;
-        year?: number;
-        page?: number;
-        providers?: number[];
-    } = {}
-): Promise<MediaItem[]> {
+    filters: DiscoverFilters = {}
+): Promise<DiscoverResult> {
     const page = filters.page || 1;
-    const results: MediaItem[] = [];
+    const paramsBase: Record<string, string> = {
+        page: page.toString(),
+        include_adult: 'false',
+    };
 
-    if (type === 'all' || type === 'movie') {
-        const params: Record<string, string> = { page: page.toString() };
-        if (filters.genre) params.with_genres = filters.genre.toString();
-        if (filters.year) params.primary_release_year = filters.year.toString();
-        if (filters.providers && filters.providers.length > 0) {
-            params.with_watch_providers = filters.providers.join('|');
-            params.watch_region = 'US';
-        }
-
-        const movieData = await fetchFromTMDB<TMDBResponse<TMDBMovie>>('/discover/movie', params);
-        results.push(...movieData.results.map(mapMovieToMediaItem));
+    if (filters.genres && filters.genres.length > 0) {
+        paramsBase.with_genres = filters.genres.join('|');
     }
 
-    if (type === 'all' || type === 'tv') {
-        const params: Record<string, string> = { page: page.toString() };
-        if (filters.genre) params.with_genres = filters.genre.toString();
-        if (filters.year) params.first_air_date_year = filters.year.toString();
-        if (filters.providers && filters.providers.length > 0) {
-            params.with_watch_providers = filters.providers.join('|');
-            params.watch_region = 'US';
-        }
-
-        const tvData = await fetchFromTMDB<TMDBResponse<TMDBTVShow>>('/discover/tv', params);
-        results.push(...tvData.results.map(mapTVShowToMediaItem));
+    if (filters.providers && filters.providers.length > 0) {
+        paramsBase.with_watch_providers = filters.providers.join('|');
+        paramsBase.watch_region = filters.region || 'US';
     }
 
-    return results;
+    if (filters.sortBy) {
+        paramsBase.sort_by = filters.sortBy;
+    }
+
+    if (filters.ratingMin !== undefined) {
+        paramsBase['vote_average.gte'] = filters.ratingMin.toString();
+    }
+
+    if (filters.ratingMax !== undefined) {
+        paramsBase['vote_average.lte'] = filters.ratingMax.toString();
+    }
+
+    const movieParams: Record<string, string> = { ...paramsBase };
+    const tvParams: Record<string, string> = { ...paramsBase };
+
+    if (filters.yearFrom !== undefined) {
+        movieParams['primary_release_date.gte'] = `${filters.yearFrom}-01-01`;
+        tvParams['first_air_date.gte'] = `${filters.yearFrom}-01-01`;
+    }
+
+    if (filters.yearTo !== undefined) {
+        movieParams['primary_release_date.lte'] = `${filters.yearTo}-12-31`;
+        tvParams['first_air_date.lte'] = `${filters.yearTo}-12-31`;
+    }
+
+    if (type === 'movie') {
+        const movieData = await fetchFromTMDB<TMDBResponse<TMDBMovie>>('/discover/movie', movieParams);
+        return {
+            items: movieData.results.map(mapMovieToMediaItem),
+            page: movieData.page,
+            totalPages: Math.min(movieData.total_pages, 500),
+            totalResults: movieData.total_results,
+        };
+    }
+
+    if (type === 'tv') {
+        const tvData = await fetchFromTMDB<TMDBResponse<TMDBTVShow>>('/discover/tv', tvParams);
+        return {
+            items: tvData.results.map(mapTVShowToMediaItem),
+            page: tvData.page,
+            totalPages: Math.min(tvData.total_pages, 500),
+            totalResults: tvData.total_results,
+        };
+    }
+
+    const [movieData, tvData] = await Promise.all([
+        fetchFromTMDB<TMDBResponse<TMDBMovie>>('/discover/movie', movieParams),
+        fetchFromTMDB<TMDBResponse<TMDBTVShow>>('/discover/tv', tvParams),
+    ]);
+
+    return {
+        items: [...movieData.results.map(mapMovieToMediaItem), ...tvData.results.map(mapTVShowToMediaItem)],
+        page,
+        totalPages: Math.min(Math.max(movieData.total_pages, tvData.total_pages), 500),
+        totalResults: movieData.total_results + tvData.total_results,
+    };
 }
 
 /**

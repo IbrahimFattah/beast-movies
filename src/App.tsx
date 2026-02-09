@@ -8,6 +8,8 @@ import { Details } from './pages/Details';
 import { Watch } from './pages/Watch';
 import { Search } from './pages/Search';
 import { Browse } from './pages/Browse';
+import { WatchlistHistory } from './pages/WatchlistHistory';
+import { WatchedList } from './pages/WatchedList';
 
 function AppContent() {
     const location = useLocation();
@@ -23,6 +25,8 @@ function AppContent() {
                     <Route path="/browse" element={<Browse />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/details/:type/:tmdbId" element={<Details />} />
+                    <Route path="/watchlist-history" element={<WatchlistHistory />} />
+                    <Route path="/watched" element={<WatchedList />} />
                     <Route path="/watch/movie/:tmdbId" element={<Watch />} />
                     <Route path="/watch/tv/:tmdbId/:season/:episode" element={<Watch />} />
                     <Route

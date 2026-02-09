@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, Search as SearchIcon, ChevronDown } from 'lucide-react';
-import { searchMulti } from '../services/tmdb';
+import { searchMulti, getSimilarMedia } from '../services/tmdb';
 import { MediaItem } from '../types/media';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorMessage } from '../components/ErrorMessage';
 import { PosterCard } from '../components/PosterCard';
+import { SectionTitle } from '../components/SectionTitle';
+import { RowCarousel } from '../components/RowCarousel';
 
 type MediaFilter = 'all' | 'movie' | 'tv';
 
@@ -20,6 +22,12 @@ export function Search() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasSearched, setHasSearched] = useState(false);
+
+    // Similar titles state
+    const [similarItems, setSimilarItems] = useState<MediaItem[]>([]);
+    const [similarLoading, setSimilarLoading] = useState(false);
+    const [similarError, setSimilarError] = useState<string | null>(null);
+    const lastSimilarKeyRef = useRef<string>('');
 
     const performSearch = async (searchTerm: string) => {
         if (!searchTerm.trim()) {
@@ -65,6 +73,63 @@ export function Search() {
             setFilteredResults(allResults.filter(item => item.type === mediaFilter));
         }
     }, [mediaFilter, allResults]);
+
+    // Fetch similar titles based on top filtered results
+    const fetchSimilarForSearch = async () => {
+        if (filteredResults.length === 0) {
+            setSimilarItems([]);
+            return;
+        }
+
+        // Pick the top 3 results to derive similar titles from
+        const topResults = filteredResults.slice(0, 3);
+        const similarKey = topResults.map(r => `${r.type}-${r.tmdbId}`).join(',');
+
+        // Skip if same key as last fetch (avoids refetch on back navigation)
+        if (similarKey === lastSimilarKeyRef.current) return;
+        lastSimilarKeyRef.current = similarKey;
+
+        setSimilarLoading(true);
+        setSimilarError(null);
+
+        try {
+            const promises = topResults.map(item =>
+                getSimilarMedia(item.type, item.tmdbId).catch(() => [] as MediaItem[])
+            );
+            const results = await Promise.all(promises);
+            const allSimilar = results.flat();
+
+            // Deduplicate and remove items already in search results
+            const resultIds = new Set(filteredResults.map(r => r.tmdbId));
+            const seen = new Set<number>();
+            const unique: MediaItem[] = [];
+
+            for (const item of allSimilar) {
+                if (!resultIds.has(item.tmdbId) && !seen.has(item.tmdbId)) {
+                    seen.add(item.tmdbId);
+                    // If filter is active, only include matching type
+                    if (mediaFilter !== 'all' && item.type !== mediaFilter) continue;
+                    unique.push(item);
+                }
+            }
+
+            setSimilarItems(unique.slice(0, 20));
+        } catch (err) {
+            console.error('[Search] Error fetching similar titles:', err);
+            setSimilarError('Couldn\'t load similar titles.');
+        } finally {
+            setSimilarLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (hasSearched && !loading && filteredResults.length > 0) {
+            fetchSimilarForSearch();
+        } else if (filteredResults.length === 0) {
+            setSimilarItems([]);
+            lastSimilarKeyRef.current = '';
+        }
+    }, [filteredResults, hasSearched, loading]);
 
     // Search when query param changes
     useEffect(() => {
@@ -177,6 +242,40 @@ export function Search() {
                                 {filteredResults.map((item) => (
                                     <PosterCard key={item.tmdbId} media={item} />
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Similar Titles Section */}
+                        {filteredResults.length > 0 && (
+                            <div className="mt-12">
+                                <SectionTitle title="Similar Titles" />
+                                {similarLoading && (
+                                    <div className="flex gap-3 overflow-hidden">
+                                        {Array.from({ length: 6 }).map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className="flex-shrink-0 w-[160px] md:w-[185px] aspect-[2/3] bg-dark-700 rounded-lg animate-pulse"
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                                {similarError && !similarLoading && (
+                                    <div className="flex items-center gap-3 py-4">
+                                        <p className="text-gray-400">{similarError}</p>
+                                        <button
+                                            onClick={fetchSimilarForSearch}
+                                            className="text-accent hover:text-accent-dark transition-colors font-medium"
+                                        >
+                                            Retry
+                                        </button>
+                                    </div>
+                                )}
+                                {!similarLoading && !similarError && similarItems.length === 0 && (
+                                    <p className="text-gray-500 py-4">No similar titles found.</p>
+                                )}
+                                {!similarLoading && !similarError && similarItems.length > 0 && (
+                                    <RowCarousel items={similarItems} />
+                                )}
                             </div>
                         )}
 
