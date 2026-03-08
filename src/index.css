@@ -228,6 +228,7 @@
     background-color: var(--color-accent);
     color: var(--color-black);
 }
+
 /* Thin scrollbar for filter panel */
 .filter-panel-scroll::-webkit-scrollbar {
     width: 4px;
@@ -244,4 +245,98 @@
 
 .filter-panel-scroll::-webkit-scrollbar-thumb:hover {
     background: var(--color-accent-light);
+}
+
+/* ── Bottom Navigation Bar ── */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(10, 10, 10, 0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    animation: slideUpNav 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.bottom-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 64px;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 8px;
+}
+
+.bottom-nav-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    padding: 6px 0;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.4);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.bottom-nav-tab:active {
+    transform: scale(0.92);
+}
+
+.bottom-nav-tab--active {
+    color: var(--color-accent);
+}
+
+.bottom-nav-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 32px;
+    border-radius: 16px;
+    transition: background-color 0.25s ease;
+}
+
+.bottom-nav-icon-wrapper--active {
+    background: rgba(244, 160, 41, 0.15);
+}
+
+.bottom-nav-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.bottom-nav-label {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    opacity: 0.55;
+    transition: opacity 0.2s ease, font-weight 0.2s ease;
+}
+
+.bottom-nav-label--active {
+    opacity: 1;
+    font-weight: 600;
+}
+
+@keyframes slideUpNav {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }

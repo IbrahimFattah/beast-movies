@@ -295,7 +295,7 @@ export function Details() {
                                 }`}
                         >
                             <CheckCircle2
-                                className={`w-6 h-6 ${isWatched ? 'fill-white text-green-500' : 'text-white'}`}
+                                className={`w-6 h-6g ${isWatched ? 'fill-white text-green-500' : 'text-white'}`}
                                 strokeWidth={2}
                             />
                             <span>{isWatched ? 'Watched' : 'Mark as Watched'}</span>

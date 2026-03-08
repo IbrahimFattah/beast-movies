@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
+import { BottomNavBar } from './components/BottomNavBar';
 import { Footer } from './components/Footer';
 import { ScrollToTop } from './components/ScrollToTop';
 import { Home } from './pages/Home';
@@ -19,7 +20,7 @@ function AppContent() {
         <div className="min-h-screen bg-black font-sans antialiased flex flex-col">
             <ScrollToTop />
             {!isWatchPage && <Navbar />}
-            <main className={isWatchPage ? '' : 'flex-1'}>
+            <main className={isWatchPage ? '' : 'flex-1 pb-20 md:pb-0'}>
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/browse" element={<Browse />} />
@@ -50,6 +51,7 @@ function AppContent() {
                 </Routes>
             </main>
             {!isWatchPage && <Footer />}
+            {!isWatchPage && <BottomNavBar />}
         </div>
     );
 }

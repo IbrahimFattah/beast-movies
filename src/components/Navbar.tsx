@@ -49,7 +49,7 @@ export function Navbar() {
     return (
         <>
             <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+                className={`hidden md:block fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
                     ? 'glass shadow-2xl'
                     : 'bg-gradient-to-b from-black/80 to-transparent'
                     }`}
