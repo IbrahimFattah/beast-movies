@@ -158,7 +158,7 @@ export function Search() {
     };
 
     return (
-        <div className="min-h-screen bg-black pt-24 pb-16 animate-slideInFromRight">
+        <div className="min-h-screen bg-black pt-6 md:pt-24 pb-16 animate-slideInFromRight">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Back Button */}
                 <Link
@@ -179,37 +179,40 @@ export function Search() {
                     </p>
 
                     {/* Search Form */}
-                    <form onSubmit={handleSearchSubmit} className="flex gap-4 max-w-3xl mx-auto">
-                        {/* Dropdown Filter */}
-                        <div className="relative">
-                            <select
-                                value={mediaFilter}
-                                onChange={(e) => setMediaFilter(e.target.value as MediaFilter)}
-                                className="appearance-none h-full px-4 pr-10 bg-dark-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-accent border-2 border-transparent cursor-pointer"
-                            >
-                                <option value="all">Movies & TV Shows</option>
-                                <option value="movie">Movies</option>
-                                <option value="tv">TV Shows</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                        </div>
+                    <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-3xl mx-auto">
+                        {/* Top row on mobile: Filter + Search Input */}
+                        <div className="flex gap-3 sm:contents">
+                            {/* Dropdown Filter */}
+                            <div className="relative flex-shrink-0">
+                                <select
+                                    value={mediaFilter}
+                                    onChange={(e) => setMediaFilter(e.target.value as MediaFilter)}
+                                    className="appearance-none h-full px-4 pr-10 py-3 sm:py-4 bg-dark-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-accent border-2 border-transparent cursor-pointer text-sm sm:text-base"
+                                >
+                                    <option value="all">Movies & TV Shows</option>
+                                    <option value="movie">Movies</option>
+                                    <option value="tv">TV Shows</option>
+                                </select>
+                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                            </div>
 
-                        {/* Search Input */}
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Type here to search..."
-                            className="flex-1 px-6 py-4 bg-dark-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-lg border-2 border-accent"
-                        />
+                            {/* Search Input */}
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Type here to search..."
+                                className="flex-1 min-w-0 px-4 sm:px-6 py-3 sm:py-4 bg-dark-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base sm:text-lg border-2 border-accent"
+                            />
+                        </div>
 
                         {/* Search Button */}
                         <button
                             type="submit"
-                            className="px-8 py-4 bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors font-semibold flex items-center gap-2"
+                            className="px-6 sm:px-8 py-3 sm:py-4 bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors font-semibold flex items-center justify-center gap-2"
                         >
                             <SearchIcon className="w-5 h-5" />
-                            <span className="hidden sm:inline">Search</span>
+                            <span>Search</span>
                         </button>
                     </form>
                 </div>
